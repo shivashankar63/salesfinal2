@@ -1,0 +1,56 @@
+# RLS Policy Error - Quick Instructions
+
+## The Problem
+```
+new row violates row-level security policy for table "users"
+```
+
+Your Supabase RLS policies don't allow your app to insert/update data.
+
+---
+
+## The Solution (3 Steps)
+
+### Step 1: Go to Supabase
+1. Open https://supabase.com
+2. Login
+3. Select your project (uvqlonqtlqypxqatgbih)
+
+### Step 2: Open SQL Editor
+1. Click **"SQL Editor"** in left sidebar
+2. Click **"New Query"** button
+
+### Step 3: Paste & Run
+
+**Choose ONE option:**
+
+#### Option A: For Development (Quick Fix) ⚡
+Copy everything from: `SUPABASE_QUICK_FIX.sql`
+- Allows all authenticated users to read/write everything
+- Good for testing
+- ⚠️ Not secure for production
+
+#### Option B: For Production (Full Fix) 🔒
+Copy everything from: `SUPABASE_RLS_FIX.sql`
+- Role-based access control
+- Users only see their own data
+- Managers control teams
+- Owners control everything
+- ✅ Secure for production
+
+### Step 4: Paste and Execute
+1. Paste the SQL code in the editor
+2. Click **"Run"** or press `Ctrl+Enter`
+3. Wait for success message
+4. Refresh your app
+
+---
+
+## Done! ✅
+
+Your app should now work without RLS errors.
+
+---
+
+## For More Details
+Read: `RLS_POLICY_GUIDE.md` in your project root

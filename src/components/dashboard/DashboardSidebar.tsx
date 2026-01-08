@@ -11,10 +11,19 @@ import {
   Menu,
   X,
   ChevronDown,
+  Briefcase,
+  Target,
+  LineChart,
+  PieChart,
+  Zap,
+  Award,
+  Phone,
+  FileText,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { supabase } from "@/lib/supabase";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -27,19 +36,52 @@ interface SidebarProps {
   role: "owner" | "manager" | "salesman";
 }
 
-const menuItems = [
-  { icon: LayoutDashboard, label: "Dashboard", path: "/dashboard" },
-  { icon: Users, label: "All Leads", path: "/leads" },
-  { icon: FolderKanban, label: "My Team", path: "/team" },
-  { icon: BarChart3, label: "Project Reports", path: "/reports" },
-  { icon: Settings, label: "Settings", path: "/settings" },
-];
+const getMenuItems = (role: "owner" | "manager" | "salesman") => {
+  const baseItems = [
+    { icon: LayoutDashboard, label: "Dashboard", path: "/" + role },
+  ];
+
+  const ownerItems = [
+    ...baseItems,
+    { icon: BarChart3, label: "All Leads", path: "/leads" },
+    { icon: Users, label: "Teams", path: "/teams" },
+    { icon: LineChart, label: "Analytics", path: "/analytics" },
+    { icon: Briefcase, label: "Regions", path: "/regions" },
+    { icon: PieChart, label: "Revenue Reports", path: "/revenue" },
+    { icon: Settings, label: "Organization", path: "/settings" },
+  ];
+
+  const managerItems = [
+    ...baseItems,
+    { icon: Users, label: "My Team", path: "/manager/team" },
+    { icon: Target, label: "Lead Pipeline", path: "/manager/pipeline" },
+    { icon: BarChart3, label: "Team Performance", path: "/manager/performance" },
+    { icon: Zap, label: "Activity Log", path: "/manager/activity" },
+    { icon: FileText, label: "Reports", path: "/manager/reports" },
+    { icon: Settings, label: "Settings", path: "/settings" },
+  ];
+
+  const salesmanItems = [
+    ...baseItems,
+    { icon: Phone, label: "My Leads", path: "/sales/my-leads" },
+    { icon: Target, label: "Pipeline", path: "/sales/pipeline" },
+    { icon: Award, label: "Leaderboard", path: "/sales/leaderboard" },
+    { icon: LineChart, label: "My Stats", path: "/sales/stats" },
+    { icon: FileText, label: "Proposals", path: "/sales/proposals" },
+    { icon: Settings, label: "Settings", path: "/settings" },
+  ];
+
+  if (role === "owner") return ownerItems;
+  if (role === "manager") return managerItems;
+  return salesmanItems;
+};
 
 const DashboardSidebar = ({ role }: SidebarProps) => {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [isMobileOpen, setIsMobileOpen] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
+  const menuItems = getMenuItems(role);
 
   const roleLabels = {
     owner: "Owner",
@@ -47,8 +89,15 @@ const DashboardSidebar = ({ role }: SidebarProps) => {
     salesman: "Salesman",
   };
 
-  const handleLogout = () => {
-    navigate("/");
+  const roleColors = {
+    owner: "bg-blue-600",
+    manager: "bg-purple-600",
+    salesman: "bg-orange-600",
+  };
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    navigate("/", { replace: true });
   };
 
   const SidebarContent = () => (
@@ -56,11 +105,14 @@ const DashboardSidebar = ({ role }: SidebarProps) => {
       {/* Logo */}
       <div className="p-4 flex items-center justify-between">
         <div className={cn("flex items-center gap-3", isCollapsed && "justify-center")}>
-          <div className="w-10 h-10 rounded-xl bg-sidebar-primary flex items-center justify-center flex-shrink-0">
-            <TrendingUp className="w-6 h-6 text-sidebar-primary-foreground" />
+          <div className={`w-10 h-10 rounded-xl ${roleColors[role]} flex items-center justify-center flex-shrink-0`}>
+            <TrendingUp className="w-6 h-6 text-white" />
           </div>
           {!isCollapsed && (
-            <span className="text-xl font-bold text-sidebar-foreground">SalesFlow</span>
+            <div>
+              <span className="text-xl font-bold text-sidebar-foreground block">SalesFlow</span>
+              <span className="text-xs text-sidebar-foreground/60">{roleLabels[role]}</span>
+            </div>
           )}
         </div>
         <Button
@@ -82,12 +134,13 @@ const DashboardSidebar = ({ role }: SidebarProps) => {
               <li key={item.path}>
                 <button
                   onClick={() => {
+                    navigate(item.path);
                     setIsMobileOpen(false);
                   }}
                   className={cn(
                     "w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200",
                     isActive
-                      ? "bg-sidebar-primary text-sidebar-primary-foreground"
+                      ? `${roleColors[role]} text-white`
                       : "text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent",
                     isCollapsed && "justify-center"
                   )}
@@ -112,7 +165,7 @@ const DashboardSidebar = ({ role }: SidebarProps) => {
               )}
             >
               <Avatar className="w-10 h-10">
-                <AvatarFallback className="bg-sidebar-primary text-sidebar-primary-foreground font-medium">
+                <AvatarFallback className={`${roleColors[role]} text-white font-medium`}>
                   JD
                 </AvatarFallback>
               </Avatar>
@@ -128,8 +181,8 @@ const DashboardSidebar = ({ role }: SidebarProps) => {
             </button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-56">
-            <DropdownMenuItem>Profile Settings</DropdownMenuItem>
-            <DropdownMenuItem>Preferences</DropdownMenuItem>
+            <DropdownMenuItem onClick={() => navigate("/settings")}>Profile Settings</DropdownMenuItem>
+            <DropdownMenuItem onClick={() => navigate("/settings")}>Preferences</DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={handleLogout} className="text-destructive">
               <LogOut className="w-4 h-4 mr-2" />
