@@ -162,6 +162,7 @@ export const createLead = async (leadData: {
   assigned_to?: string | null;
   project_id: string;
   description?: string;
+  link?: string;
 }) => {
   console.log('[createLead] Attempting to create lead:', leadData);
   
@@ -188,6 +189,48 @@ export const createLead = async (leadData: {
   }
   
   console.log('[createLead] Successfully created lead:', data);
+  return { data, error: null };
+};
+
+export const createBulkLeads = async (leads: Array<{
+  company_name: string;
+  contact_name?: string;
+  email?: string;
+  phone?: string;
+  project_id: string;
+  description?: string;
+  link?: string;
+  value?: number;
+}>) => {
+  console.log('[createBulkLeads] Attempting to create', leads.length, 'leads');
+  
+  const currentUser = await getCurrentUser();
+  if (!currentUser) {
+    throw new Error('You must be logged in to create leads');
+  }
+  
+  const leadsWithCreator = leads.map(lead => ({
+    ...lead,
+    created_by: currentUser.id,
+    status: 'new',
+    value: lead.value || 0,
+    contact_name: lead.contact_name || 'N/A',
+    email: lead.email || '',
+    phone: lead.phone || '',
+  }));
+  
+  const { data, error } = await supabase
+    .from('leads')
+    .insert(leadsWithCreator)
+    .select();
+  
+  if (error) {
+    console.error('[createBulkLeads] Failed to create leads:', error);
+    logSupabaseError('createBulkLeads', error);
+    throw new Error(error.message || 'Failed to create leads');
+  }
+  
+  console.log('[createBulkLeads] Successfully created', data?.length || 0, 'leads');
   return { data, error: null };
 };
 
@@ -262,6 +305,27 @@ export const getActivitiesForLead = async (leadId: string) => {
     .eq('lead_id', leadId)
     .order('created_at', { ascending: false });
   return { data: data || [], error };
+};
+
+export const getActivitiesForProject = async (projectId: string) => {
+  try {
+    const { data: leads, error: leadsErr } = await supabase
+      .from('leads')
+      .select('id')
+      .eq('project_id', projectId);
+    if (leadsErr) throw leadsErr;
+    const ids = (leads || []).map((l: any) => l.id);
+    if (!ids.length) return { data: [], error: null };
+    const { data, error } = await supabase
+      .from('activities')
+      .select('*')
+      .in('lead_id', ids)
+      .order('created_at', { ascending: false });
+    if (error) throw error;
+    return { data: data || [], error: null };
+  } catch (error) {
+    return { data: [], error: error as any };
+  }
 };
 
 // Database functions for Quotas
@@ -581,6 +645,20 @@ export const subscribeToLeadActivities = (leadId: string, callback: (data: any) 
   return subscription;
 };
 
+// Subscribe to all activities (client filters as needed)
+export const subscribeToActivitiesAll = (callback: (data: any) => void) => {
+  const subscription = supabase
+    .channel('activities:all')
+    .on(
+      'postgres_changes',
+      { event: '*', schema: 'public', table: 'activities' },
+      (payload) => callback(payload)
+    )
+    .subscribe();
+
+  return subscription;
+};
+
 // Users real-time subscription
 export const subscribeToUsers = (callback: (data: any) => void) => {
   const subscription = supabase
@@ -602,6 +680,19 @@ export const subscribeToLeadsForUser = (userId: string, callback: (data: any) =>
     .on(
       'postgres_changes',
       { event: '*', schema: 'public', table: 'leads', filter: `assigned_to=eq.${userId}` },
+      (payload) => callback(payload)
+    )
+    .subscribe();
+
+  return subscription;
+};
+
+export const subscribeToProjectLeads = (projectId: string, callback: (data: any) => void) => {
+  const subscription = supabase
+    .channel(`leads:project:${projectId}`)
+    .on(
+      'postgres_changes',
+      { event: '*', schema: 'public', table: 'leads', filter: `project_id=eq.${projectId}` },
       (payload) => callback(payload)
     )
     .subscribe();
@@ -648,6 +739,7 @@ export const createProject = async (project: {
   owner_id?: string;
   start_date?: string;
   end_date?: string;
+  link?: string;
 }) => {
   try {
     const { data, error } = await supabase.from('projects').insert([{
@@ -658,5 +750,50 @@ export const createProject = async (project: {
     return { data, error: null };
   } catch (error) {
     return { data: null as any, error: error as any };
+  }
+};
+
+export const getProjectById = async (id: string) => {
+  try {
+    const { data, error } = await supabase.from('projects').select('*').eq('id', id).single();
+    if (error) throw error;
+    return { data, error: null };
+  } catch (error) {
+    return { data: null as any, error: error as any };
+  }
+};
+
+export const updateProject = async (id: string, updates: {
+  name?: string;
+  description?: string;
+  budget?: number;
+  status?: string;
+  link?: string;
+  start_date?: string;
+  end_date?: string;
+}) => {
+  try {
+    const { data, error } = await supabase
+      .from('projects')
+      .update(updates)
+      .eq('id', id)
+      .select();
+    if (error) throw error;
+    return { data, error: null };
+  } catch (error) {
+    return { data: null as any, error: error as any };
+  }
+};
+
+export const getLeadsForProject = async (projectId: string) => {
+  try {
+    const { data, error } = await supabase
+      .from('leads')
+      .select('*')
+      .eq('project_id', projectId);
+    if (error) throw error;
+    return { data: data || [], error: null };
+  } catch (error) {
+    return { data: [], error: error as any };
   }
 };

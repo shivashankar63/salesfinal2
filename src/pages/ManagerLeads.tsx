@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { Plus, Loader, CheckCircle, Clock, XCircle, AlertCircle, Filter, Search, Download, Mail, Phone as PhoneIcon, Briefcase } from "lucide-react";
 import DashboardSidebar from "@/components/dashboard/DashboardSidebar";
 import { Card } from "@/components/ui/card";
@@ -13,6 +14,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 
 const ManagerLeads = () => {
+  const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [loading, setLoading] = useState(true);
   const [projects, setProjects] = useState<any[]>([]);
   const [selectedProject, setSelectedProject] = useState<any | null>(null);
@@ -36,6 +39,7 @@ const ManagerLeads = () => {
     assigned_to: "",
     status: "new" as "new" | "qualified" | "negotiation" | "won" | "lost",
     description: "",
+    link: "",
   });
   const [creating, setCreating] = useState(false);
   const [createMessage, setCreateMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
@@ -82,6 +86,17 @@ const ManagerLeads = () => {
 
     fetchData();
   }, []);
+
+  // If a leadId is present in the URL, open that lead's modal when data is available
+  useEffect(() => {
+    const paramId = searchParams.get("leadId");
+    if (!paramId || !leads?.length) return;
+    const found = leads.find((l) => String(l.id) === String(paramId));
+    if (found) {
+      setSelectedLead(found);
+      setShowDetailsModal(true);
+    }
+  }, [searchParams, leads]);
 
   useEffect(() => {
     // Realtime: listen for users changes to keep sales list fresh
@@ -161,6 +176,7 @@ const ManagerLeads = () => {
         assigned_to: leadForm.assigned_to || null,
         project_id: selectedProject.id,
         description: leadForm.description || `Created on ${new Date().toLocaleDateString()}`,
+        link: leadForm.link || undefined,
       });
       
       console.log('Lead created:', newLead);
@@ -176,7 +192,7 @@ const ManagerLeads = () => {
       
       setTimeout(() => {
         setShowAddLeadModal(false);
-        setLeadForm({ company_name: "", contact_name: "", email: "", phone: "", value: "", assigned_to: "", status: "new", description: "" });
+        setLeadForm({ company_name: "", contact_name: "", email: "", phone: "", value: "", assigned_to: "", status: "new", description: "", link: "" });
         setCreateMessage(null);
       }, 1500);
     } catch (err: any) {
@@ -316,7 +332,7 @@ const ManagerLeads = () => {
       
       <main className="flex-1 p-2 sm:p-4 lg:p-8 pt-16 lg:pt-8 overflow-auto">
         <div className="mb-4 sm:mb-6">
-          <h1 className="text-2xl sm:text-3xl font-bold text-white mb-1 sm:mb-2">Leads Management</h1>
+          <h1 className="text-2xl sm:text-2xl font-bold text-white mb-1 sm:mb-2">Leads Management</h1>
           <p className="text-sm sm:text-base text-slate-300">Manage and track all leads across projects</p>
         </div>
 
@@ -358,7 +374,7 @@ const ManagerLeads = () => {
         {projects.length === 0 && (
           <Card className="p-12 bg-white/5 border-white/10 text-center">
             <Briefcase className="w-16 h-16 text-slate-600 mx-auto mb-4" />
-            <h3 className="text-xl font-semibold text-white mb-2">No Projects Available</h3>
+            <h3 className="text-lg font-semibold text-white mb-2">No Projects Available</h3>
             <p className="text-slate-400 mb-6">Create a project first to start adding leads</p>
           </Card>
         )}
@@ -366,111 +382,103 @@ const ManagerLeads = () => {
         {projects.length > 0 && !selectedProject && (
           <Card className="p-12 bg-white/5 border-white/10 text-center">
             <AlertCircle className="w-16 h-16 text-purple-500 mx-auto mb-4" />
-            <h3 className="text-xl font-semibold text-white mb-2">Select a Project</h3>
+            <h3 className="text-lg font-semibold text-white mb-2">Select a Project</h3>
             <p className="text-slate-400">Please select a project from the dropdown above to view and manage leads</p>
           </Card>
         )}
 
         {selectedProject && (
           <>
-            {/* Stats Cards */}
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2 sm:gap-3 mb-4 sm:mb-6">
-              <Card className="p-2 sm:p-4 bg-slate-800/60 border-slate-700 hover:bg-slate-800/80 transition-colors">
-                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 sm:gap-2">
-                  <div>
-                    <p className="text-xs text-slate-300 font-medium">Total Leads</p>
-                    <p className="text-xl sm:text-2xl font-bold text-white">{leads.length}</p>
+            {/* Compact Stats Bar */}
+            <Card className="p-3 bg-slate-800/60 border-slate-700 mb-3">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                {/* Stats */}
+                <div className="flex flex-wrap items-center gap-3 flex-1">
+                  <div className="flex items-center gap-2 px-3 py-1.5 bg-slate-900/60 rounded-lg border border-slate-700">
+                    <Clock className="w-4 h-4 text-slate-300" />
+                    <div className="flex items-baseline gap-1">
+                      <span className="text-lg font-bold text-white">{leads.length}</span>
+                      <span className="text-xs text-slate-400 font-semibold">Total</span>
+                    </div>
                   </div>
-                  <Clock className="w-4 sm:w-5 h-4 sm:h-5 text-blue-400" />
-                </div>
-              </Card>
-              <Card className="p-2 sm:p-4 bg-slate-800/60 border-slate-700 hover:bg-slate-800/80 transition-colors">
-                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 sm:gap-2">
-                  <div>
-                    <p className="text-xs text-slate-300 font-medium">New</p>
-                    <p className="text-xl sm:text-2xl font-bold text-white">{newLeads.length}</p>
+                  <div className="flex items-center gap-2 px-3 py-1.5 bg-slate-900/60 rounded-lg border border-slate-700">
+                    <Clock className="w-4 h-4 text-slate-300" />
+                    <div className="flex items-baseline gap-1">
+                      <span className="text-lg font-bold text-white">{newLeads.length}</span>
+                      <span className="text-xs text-slate-400 font-semibold">New</span>
+                    </div>
                   </div>
-                  <Clock className="w-4 sm:w-5 h-4 sm:h-5 text-slate-300" />
-                </div>
-              </Card>
-              <Card className="p-2 sm:p-4 bg-slate-800/60 border-slate-700 hover:bg-slate-800/80 transition-colors">
-                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 sm:gap-2">
-                  <div>
-                    <p className="text-xs text-slate-300 font-medium">Qualified</p>
-                    <p className="text-xl sm:text-2xl font-bold text-white">{qualifiedLeads.length}</p>
+                  <div className="flex items-center gap-2 px-3 py-1.5 bg-slate-900/60 rounded-lg border border-slate-700">
+                    <CheckCircle className="w-4 h-4 text-slate-300" />
+                    <div className="flex items-baseline gap-1">
+                      <span className="text-lg font-bold text-white">{qualifiedLeads.length}</span>
+                      <span className="text-xs text-slate-400 font-semibold">Qualified</span>
+                    </div>
                   </div>
-                  <CheckCircle className="w-4 sm:w-5 h-4 sm:h-5 text-blue-400" />
-                </div>
-              </Card>
-              <Card className="p-2 sm:p-4 bg-slate-800/60 border-slate-700 hover:bg-slate-800/80 transition-colors">
-                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 sm:gap-2">
-                  <div>
-                    <p className="text-xs text-slate-300 font-medium">Negotiation</p>
-                    <p className="text-xl sm:text-2xl font-bold text-white">{negotiationLeads.length}</p>
+                  <div className="flex items-center gap-2 px-3 py-1.5 bg-slate-900/60 rounded-lg border border-slate-700">
+                    <AlertCircle className="w-4 h-4 text-orange-400" />
+                    <div className="flex items-baseline gap-1">
+                      <span className="text-lg font-bold text-white">{negotiationLeads.length}</span>
+                      <span className="text-xs text-slate-400 font-semibold">Negotiation</span>
+                    </div>
                   </div>
-                  <AlertCircle className="w-4 sm:w-5 h-4 sm:h-5 text-orange-400" />
-                </div>
-              </Card>
-              <Card className="p-2 sm:p-4 bg-slate-800/60 border-slate-700 hover:bg-slate-800/80 transition-colors">
-                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 sm:gap-2">
-                  <div>
-                    <p className="text-xs text-slate-300 font-medium">Total Value</p>
-                    <p className="text-xl sm:text-2xl font-bold text-white">${(totalValue / 1000).toFixed(0)}K</p>
+                  <div className="flex items-center gap-2 px-3 py-1.5 bg-slate-900/60 rounded-lg border border-slate-700">
+                    <Download className="w-4 h-4 text-green-400" />
+                    <div className="flex items-baseline gap-1">
+                      <span className="text-lg font-bold text-green-400">${(totalValue / 1000).toFixed(0)}K</span>
+                      <span className="text-xs text-slate-400 font-semibold">Value</span>
+                    </div>
                   </div>
-                  <Download className="w-4 sm:w-5 h-4 sm:h-5 text-green-400" />
                 </div>
-              </Card>
-            </div>
-
-            {/* Filters */}
-            <Card className="p-3 sm:p-4 bg-slate-800/60 border-slate-700 mb-3 sm:mb-4">
-              <div className="flex items-center gap-2 mb-3">
-                <Filter className="w-4 h-4 text-blue-400" />
-                <h3 className="text-xs sm:text-sm font-semibold text-white">Filters</h3>
               </div>
-              <div className="grid grid-cols-1 gap-2 sm:gap-3">
-                <div>
-                  <Label className="text-slate-200 text-xs font-medium">Status</Label>
+            </Card>
+
+            {/* Compact Filters Bar */}
+            <Card className="p-3 bg-slate-800/60 border-slate-700 mb-3">
+              <div className="flex flex-wrap items-center gap-3">
+                <div className="flex items-center gap-2">
+                  <Filter className="w-4 h-4 text-slate-300" />
+                  <span className="text-xs font-bold text-white">Filters:</span>
+                </div>
+                <div className="flex-1 min-w-[150px] max-w-[200px]">
                   <Select value={statusFilter} onValueChange={setStatusFilter}>
-                    <SelectTrigger className="mt-1 bg-slate-800/80 border-slate-600 text-white hover:bg-slate-800">
-                      <SelectValue />
+                    <SelectTrigger className="h-9 bg-slate-900/60 border-slate-700 text-white hover:bg-slate-900 font-medium">
+                      <SelectValue placeholder="Status" />
                     </SelectTrigger>
-                    <SelectContent className="bg-slate-800 border-slate-600">
-                      <SelectItem value="all" className="text-white hover:bg-slate-700">All Statuses</SelectItem>
-                      <SelectItem value="new" className="text-white hover:bg-slate-700">New</SelectItem>
-                      <SelectItem value="qualified" className="text-white hover:bg-slate-700">Qualified</SelectItem>
-                      <SelectItem value="negotiation" className="text-white hover:bg-slate-700">Negotiation</SelectItem>
-                      <SelectItem value="won" className="text-white hover:bg-slate-700">Won</SelectItem>
-                      <SelectItem value="lost" className="text-white hover:bg-slate-700">Lost</SelectItem>
+                    <SelectContent className="bg-slate-900 border-slate-700">
+                      <SelectItem value="all" className="text-white hover:bg-slate-800 font-medium">All Statuses</SelectItem>
+                      <SelectItem value="new" className="text-white hover:bg-slate-800 font-medium">New</SelectItem>
+                      <SelectItem value="qualified" className="text-white hover:bg-slate-800 font-medium">Qualified</SelectItem>
+                      <SelectItem value="negotiation" className="text-white hover:bg-slate-800 font-medium">Negotiation</SelectItem>
+                      <SelectItem value="won" className="text-white hover:bg-slate-800 font-medium">Won</SelectItem>
+                      <SelectItem value="lost" className="text-white hover:bg-slate-800 font-medium">Lost</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
-                <div>
-                  <Label className="text-slate-200 text-xs font-medium">Assignee</Label>
+                <div className="flex-1 min-w-[150px] max-w-[200px]">
                   <Select value={assigneeFilter} onValueChange={setAssigneeFilter}>
-                    <SelectTrigger className="mt-1 bg-slate-800/80 border-slate-600 text-white hover:bg-slate-800">
-                      <SelectValue />
+                    <SelectTrigger className="h-9 bg-slate-900/60 border-slate-700 text-white hover:bg-slate-900 font-medium">
+                      <SelectValue placeholder="Assignee" />
                     </SelectTrigger>
-                    <SelectContent className="bg-slate-800 border-slate-600">
-                      <SelectItem value="all" className="text-white hover:bg-slate-700">All Assignees</SelectItem>
-                      <SelectItem value="unassigned" className="text-white hover:bg-slate-700">Unassigned</SelectItem>
+                    <SelectContent className="bg-slate-900 border-slate-700">
+                      <SelectItem value="all" className="text-white hover:bg-slate-800 font-medium">All Assignees</SelectItem>
+                      <SelectItem value="unassigned" className="text-white hover:bg-slate-800 font-medium">Unassigned</SelectItem>
                       {salesUsers.map((u: any) => (
-                        <SelectItem key={u.id} value={u.id} className="text-white hover:bg-slate-700">
+                        <SelectItem key={u.id} value={u.id} className="text-white hover:bg-slate-800 font-medium">
                           {u.full_name || u.email?.split("@")[0] || u.id}
                         </SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
                 </div>
-                <div>
-                  <Label className="text-slate-200 text-xs font-medium">Search</Label>
-                  <div className="relative mt-1">
+                <div className="flex-1 min-w-[200px]">
+                  <div className="relative">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                     <Input
                       value={searchTerm}
                       onChange={(e) => setSearchTerm(e.target.value)}
                       placeholder="Search leads..."
-                      className="pl-9 bg-slate-800/80 border-slate-600 text-white placeholder:text-slate-400"
+                      className="h-9 pl-9 bg-slate-900/60 border-slate-700 text-white placeholder:text-slate-500 font-medium"
                     />
                   </div>
                 </div>
@@ -488,7 +496,7 @@ const ManagerLeads = () => {
                   const isStale = daysStale > 7;
                   
                   return (
-                    <Card key={lead.id} className="p-3 sm:p-4 bg-slate-800/80 border-slate-600 hover:bg-slate-700/80 transition-colors cursor-pointer" onClick={() => {
+                    <Card key={lead.id} className="p-3 sm:p-4 bg-slate-900/60 border-slate-700 hover:bg-slate-900/80 transition-colors cursor-pointer" onClick={() => {
                       setSelectedLead(lead);
                       setShowDetailsModal(true);
                     }}>
@@ -496,8 +504,8 @@ const ManagerLeads = () => {
                         <div className="flex-1">
                           <div className="flex flex-wrap items-center gap-2 mb-2">
                             {getStatusIcon(lead.status)}
-                            <h3 className="font-semibold text-white text-sm sm:text-lg">{lead.company_name}</h3>
-                            <Badge className={getStatusColor(lead.status) + " text-xs sm:text-sm"}>{lead.status}</Badge>
+                            <h3 className="font-bold text-white text-sm sm:text-base">{lead.company_name}</h3>
+                            <Badge className={getStatusColor(lead.status) + " text-xs sm:text-sm font-semibold"}>{lead.status}</Badge>
                             {isStale && (
                               <Badge className="bg-amber-500/20 text-amber-300 border-amber-500/30">Stale ({daysStale}d)</Badge>
                             )}
@@ -520,7 +528,7 @@ const ManagerLeads = () => {
                           <div className="mt-2 text-sm">
                             <span className="text-purple-400 font-semibold">${((lead.value || 0) / 1000).toFixed(1)}K</span>
                             <span className="text-slate-500 mx-2">•</span>
-                            <span className="text-slate-400">Assigned to: {assignedName}</span>
+                            <span className="text-slate-300">Assigned to: {assignedName}</span>
                           </div>
                         </div>
                         <div className="flex flex-col gap-2 w-full lg:w-56">
@@ -681,6 +689,17 @@ const ManagerLeads = () => {
                     rows={3}
                   />
                 </div>
+                <div className="col-span-2">
+                  <Label htmlFor="link">Company Website / Link</Label>
+                  <Input
+                    id="link"
+                    type="url"
+                    value={leadForm.link}
+                    onChange={(e) => setLeadForm({ ...leadForm, link: e.target.value })}
+                    placeholder="https://example.com"
+                  />
+                  <div className="text-xs text-slate-500 mt-1">Enter the company website or relevant link</div>
+                </div>
               </div>
             </div>
             <DialogFooter>
@@ -693,10 +712,21 @@ const ManagerLeads = () => {
         </Dialog>
 
         {/* Lead Details Modal */}
-        <Dialog open={showDetailsModal} onOpenChange={setShowDetailsModal}>
+        <Dialog
+          open={showDetailsModal}
+          onOpenChange={(open) => {
+            setShowDetailsModal(open);
+            if (!open) {
+              // Remove leadId from URL when closing
+              const next = new URLSearchParams(searchParams);
+              next.delete("leadId");
+              setSearchParams(next, { replace: true });
+            }
+          }}
+        >
           <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto bg-slate-950">
             <DialogHeader className="border-b border-slate-800 pb-4">
-              <DialogTitle className="text-2xl text-white">Lead Details</DialogTitle>
+              <DialogTitle className="text-xl text-white">Lead Details</DialogTitle>
             </DialogHeader>
             {selectedLead && (
               <div className="space-y-6">
@@ -704,10 +734,10 @@ const ManagerLeads = () => {
                 <div className="pb-4 border-b border-slate-800 bg-gradient-to-r from-purple-950/30 to-blue-950/30 p-4 rounded-lg">
                   <div className="flex items-start justify-between gap-4 mb-3">
                     <div>
-                      <h3 className="text-3xl font-bold text-white">{selectedLead.company_name}</h3>
+                      <h3 className="text-2xl font-bold text-white">{selectedLead.company_name}</h3>
                       <p className="text-gray-300 text-sm mt-2">📞 {selectedLead.contact_name}</p>
                     </div>
-                    <Badge className={`${getStatusColor(selectedLead.status)} text-lg px-4 py-2`}>{selectedLead.status.toUpperCase()}</Badge>
+                    <Badge className={`${getStatusColor(selectedLead.status)} text-sm px-3 py-1`}>{selectedLead.status.toUpperCase()}</Badge>
                   </div>
                 </div>
 
@@ -733,6 +763,26 @@ const ManagerLeads = () => {
                   </div>
                 </div>
 
+                {/* Company Link */}
+                {selectedLead.link && (
+                  <div>
+                    <h4 className="text-base font-bold text-white mb-3 flex items-center gap-2">
+                      <span className="w-1 h-1 bg-cyan-400 rounded-full"></span>
+                      Company Website
+                    </h4>
+                    <div className="bg-gradient-to-br from-slate-800 to-slate-900 p-4 rounded-lg border border-slate-700 hover:border-cyan-500/50 transition-all">
+                      <a 
+                        href={selectedLead.link.startsWith('http') ? selectedLead.link : `https://${selectedLead.link}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-cyan-300 hover:text-cyan-100 break-all text-sm font-medium underline flex items-center gap-2"
+                      >
+                        🔗 {selectedLead.link}
+                      </a>
+                    </div>
+                  </div>
+                )}
+
                 {/* Deal Information */}
                 <div>
                   <h4 className="text-base font-bold text-white mb-3 flex items-center gap-2">
@@ -742,7 +792,7 @@ const ManagerLeads = () => {
                   <div className="grid grid-cols-3 gap-4">
                     <div className="bg-gradient-to-br from-slate-800 to-slate-900 p-4 rounded-lg border border-slate-700">
                       <span className="text-xs font-semibold text-green-300 block mb-2 uppercase tracking-wide">💰 Deal Value</span>
-                      <span className="text-2xl font-bold text-green-400">${((selectedLead.value || 0) / 1000).toFixed(1)}K</span>
+                      <span className="text-xl font-bold text-green-400">${((selectedLead.value || 0) / 1000).toFixed(1)}K</span>
                     </div>
                     <div className="bg-gradient-to-br from-slate-800 to-slate-900 p-4 rounded-lg border border-slate-700">
                       <span className="text-xs font-semibold text-blue-300 block mb-2 uppercase tracking-wide">📊 Status</span>

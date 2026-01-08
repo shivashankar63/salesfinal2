@@ -119,12 +119,12 @@ const ManagerSalesPerformance = () => {
 
   if (loading) {
     return (
-      <div className="flex min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950">
+      <div className="flex min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
         <DashboardSidebar role="manager" />
         <main className="flex-1 flex items-center justify-center">
           <div className="text-center">
-            <Loader className="w-12 h-12 animate-spin text-blue-500 mx-auto mb-4" />
-            <p className="text-slate-200">Loading sales performance...</p>
+            <Loader className="w-12 h-12 animate-spin text-purple-400 mx-auto mb-4" />
+            <p className="text-slate-300">Loading sales performance...</p>
           </div>
         </main>
       </div>
@@ -132,52 +132,52 @@ const ManagerSalesPerformance = () => {
   }
 
   return (
-    <div className="flex min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950">
+    <div className="flex min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
       <DashboardSidebar role="manager" />
 
       <main className="flex-1 p-2 sm:p-4 lg:p-8 pt-16 lg:pt-8 overflow-auto">
         <div className="mb-6 sm:mb-8">
-          <h1 className="text-2xl sm:text-4xl font-bold text-white mb-1 sm:mb-2">Sales Performance Dashboard</h1>
-          <p className="text-sm sm:text-base text-slate-300">Monitor team performance, quotas, and pipeline metrics</p>
+          <h1 className="text-2xl sm:text-3xl font-bold text-white mb-1 sm:mb-2 drop-shadow-lg">Sales Performance Dashboard</h1>
+          <p className="text-sm sm:text-base text-white/90 drop-shadow">Monitor team performance, quotas, and pipeline metrics</p>
         </div>
 
         {/* Summary Stats */}
         <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-4 mb-6 sm:mb-8">
-          <Card className="p-3 sm:p-6 bg-gradient-to-br from-green-900/40 to-slate-800 border-green-600/60">
+          <Card className="p-3 sm:p-6 bg-slate-800/60 border-slate-700">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
               <div>
-                <p className="text-slate-200 text-xs sm:text-sm mb-1 font-medium">Total Revenue</p>
-                <p className="text-xl sm:text-3xl font-bold text-green-300">${(totalRevenue / 1000000).toFixed(2)}M</p>
+                <p className="text-slate-300 text-xs sm:text-sm mb-1 font-bold">Total Revenue</p>
+                <p className="text-lg sm:text-2xl font-bold text-green-400">${(totalRevenue / 1000000).toFixed(2)}M</p>
               </div>
               <DollarSign className="w-6 sm:w-8 h-6 sm:h-8 text-green-400" />
             </div>
           </Card>
 
-          <Card className="p-3 sm:p-6 bg-gradient-to-br from-blue-900/40 to-slate-800 border-blue-600/60">
+          <Card className="p-3 sm:p-6 bg-slate-800/60 border-slate-700">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
               <div>
-                <p className="text-slate-200 text-xs sm:text-sm mb-1 font-medium">Total Quota</p>
-                <p className="text-xl sm:text-3xl font-bold text-blue-300">${(totalQuota / 1000000).toFixed(2)}M</p>
+                <p className="text-slate-300 text-xs sm:text-sm mb-1 font-bold">Total Quota</p>
+                <p className="text-lg sm:text-2xl font-bold text-slate-100">${(totalQuota / 1000000).toFixed(2)}M</p>
               </div>
               <Target className="w-6 sm:w-8 h-6 sm:h-8 text-blue-400" />
             </div>
           </Card>
 
-          <Card className="p-3 sm:p-6 bg-gradient-to-br from-purple-900/40 to-slate-800 border-purple-600/60">
+          <Card className="p-3 sm:p-6 bg-slate-800/60 border-slate-700">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
               <div>
-                <p className="text-slate-200 text-xs sm:text-sm mb-1 font-medium">Team Size</p>
-                <p className="text-xl sm:text-3xl font-bold text-purple-300">{salesTeam.length}</p>
+                <p className="text-slate-300 text-xs sm:text-sm mb-1 font-bold">Team Size</p>
+                <p className="text-lg sm:text-2xl font-bold text-slate-100">{salesTeam.length}</p>
               </div>
-              <Users className="w-6 sm:w-8 h-6 sm:h-8 text-purple-400" />
+              <Users className="w-6 sm:w-8 h-6 sm:h-8 text-blue-400" />
             </div>
           </Card>
 
-          <Card className="p-3 sm:p-6 bg-gradient-to-br from-orange-900/40 to-slate-800 border-orange-600/60">
+          <Card className="p-3 sm:p-6 bg-slate-800/60 border-slate-700">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
               <div>
-                <p className="text-slate-200 text-xs sm:text-sm mb-1 font-medium">Avg Win Rate</p>
-                <p className="text-xl sm:text-3xl font-bold text-orange-300">{avgWinRate}%</p>
+                <p className="text-slate-300 text-xs sm:text-sm mb-1 font-bold">Avg Win Rate</p>
+                <p className="text-lg sm:text-2xl font-bold text-slate-100">{avgWinRate}%</p>
               </div>
               <Award className="w-6 sm:w-8 h-6 sm:h-8 text-orange-400" />
             </div>
@@ -186,19 +186,19 @@ const ManagerSalesPerformance = () => {
 
         {/* Team Performance Table */}
         <Card className="p-3 sm:p-6 bg-slate-800/60 border-slate-700">
-          <h2 className="text-lg sm:text-2xl font-bold text-white mb-4 sm:mb-6">Sales Team Performance</h2>
+          <h2 className="text-lg sm:text-xl font-bold text-slate-100 mb-4 sm:mb-6">Sales Team Performance</h2>
 
           {salesTeam.length === 0 ? (
             <div className="text-center py-8 sm:py-12">
-              <AlertCircle className="w-10 sm:w-12 h-10 sm:h-12 text-slate-500 mx-auto mb-4" />
-              <p className="text-sm sm:text-base text-slate-300">No salespeople assigned yet.</p>
+              <AlertCircle className="w-10 sm:w-12 h-10 sm:h-12 text-[#8697C4] mx-auto mb-4" />
+              <p className="text-sm sm:text-base text-[#3D52A0] font-medium">No salespeople assigned yet.</p>
             </div>
           ) : (
             <div className="space-y-3 sm:space-y-4">
               {salesTeam.map((salesman) => (
                 <div
                   key={salesman.id}
-                  className="bg-gradient-to-r from-slate-800/70 to-slate-700/70 p-3 sm:p-5 rounded-lg border border-slate-600 hover:border-slate-500 transition-all cursor-pointer"
+                  className="bg-slate-900/60 p-3 sm:p-5 rounded-lg border border-slate-700 hover:border-slate-600 hover:bg-slate-900/80 transition-all cursor-pointer"
                   onClick={() => {
                     setSelectedSalesman(salesman);
                     setShowDetailsModal(true);
@@ -207,45 +207,45 @@ const ManagerSalesPerformance = () => {
                   <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2 sm:gap-6 mb-3 sm:mb-4">
                     <div className="flex-1">
                       <div className="flex items-center gap-3 mb-2">
-                        <div className="w-8 sm:w-10 h-8 sm:h-10 rounded-full bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center text-white font-bold text-sm sm:text-base">
+                        <div className="w-8 sm:w-10 h-8 sm:h-10 rounded-full bg-slate-700 flex items-center justify-center text-white font-bold text-sm sm:text-base">
                           {salesman.name.charAt(0).toUpperCase()}
                         </div>
                         <div>
                           <h3 className="text-white font-bold text-sm sm:text-lg">{salesman.name}</h3>
-                          <p className="text-xs text-slate-300 truncate">{salesman.email}</p>
+                          <p className="text-xs text-slate-400 truncate font-medium">{salesman.email}</p>
                         </div>
                       </div>
                     </div>
 
                     <div className="text-right sm:self-start">
-                      <div className={`text-2xl sm:text-3xl font-bold ${getAchievementColor(salesman.achievement)}`}>
+                      <div className={`text-xl sm:text-2xl font-bold ${getAchievementColor(salesman.achievement)}`}>
                         {salesman.achievement}%
                       </div>
-                      <p className="text-xs text-slate-300 font-medium">of quota</p>
+                      <p className="text-xs text-[#3D52A0] font-bold">of quota</p>
                     </div>
                   </div>
 
                   {/* Performance Metrics */}
                   <div className="grid grid-cols-3 sm:grid-cols-5 gap-2 sm:gap-3">
-                    <div className="bg-slate-900/60 p-2 sm:p-3 rounded-lg border border-slate-700">
-                      <p className="text-xs text-slate-300 mb-1 font-medium">Revenue</p>
-                      <p className="font-bold text-green-300 text-xs sm:text-sm">${(salesman.revenue / 1000).toFixed(0)}K</p>
+                    <div className="bg-slate-800 p-2 sm:p-3 rounded-lg border border-slate-700">
+                      <p className="text-xs text-slate-300 mb-1 font-bold">Revenue</p>
+                      <p className="font-bold text-green-600 text-xs sm:text-sm">${(salesman.revenue / 1000).toFixed(0)}K</p>
                     </div>
-                    <div className="bg-slate-900/60 p-2 sm:p-3 rounded-lg border border-slate-700">
-                      <p className="text-xs text-slate-300 mb-1 font-medium">Quota</p>
-                      <p className="font-bold text-blue-300 text-xs sm:text-sm">${(salesman.quota / 1000).toFixed(0)}K</p>
+                    <div className="bg-slate-800 p-2 sm:p-3 rounded-lg border border-slate-700">
+                      <p className="text-xs text-slate-300 mb-1 font-bold">Quota</p>
+                      <p className="font-bold text-slate-100 text-xs sm:text-sm">${(salesman.quota / 1000).toFixed(0)}K</p>
                     </div>
-                    <div className="bg-slate-900/60 p-2 sm:p-3 rounded-lg border border-slate-700">
-                      <p className="text-xs text-slate-300 mb-1 font-medium">Won</p>
-                      <p className="font-bold text-purple-300 text-xs sm:text-sm">{salesman.leads.won}</p>
+                    <div className="bg-slate-800 p-2 sm:p-3 rounded-lg border border-slate-700">
+                      <p className="text-xs text-slate-300 mb-1 font-bold">Won</p>
+                      <p className="font-bold text-slate-100 text-xs sm:text-sm">{salesman.leads.won}</p>
                     </div>
-                    <div className="bg-slate-900/60 p-2 sm:p-3 rounded-lg border border-slate-700 hidden sm:block">
-                      <p className="text-xs text-slate-300 mb-1 font-medium">Win Rate</p>
-                      <p className="font-bold text-orange-300 text-sm">{salesman.winRate}%</p>
+                    <div className="bg-slate-800 p-2 sm:p-3 rounded-lg border border-slate-700 hidden sm:block">
+                      <p className="text-xs text-slate-300 mb-1 font-bold">Win Rate</p>
+                      <p className="font-bold text-orange-500 text-sm">{salesman.winRate}%</p>
                     </div>
-                    <div className="bg-slate-900/60 p-2 sm:p-3 rounded-lg border border-slate-700 hidden sm:block">
-                      <p className="text-xs text-slate-300 mb-1 font-medium">Avg Deal</p>
-                      <p className="font-bold text-pink-300 text-sm">${(salesman.avgDealValue / 1000).toFixed(0)}K</p>
+                    <div className="bg-slate-800 p-2 sm:p-3 rounded-lg border border-slate-700 hidden sm:block">
+                      <p className="text-xs text-slate-300 mb-1 font-bold">Avg Deal</p>
+                      <p className="font-bold text-slate-100 text-sm">${(salesman.avgDealValue / 1000).toFixed(0)}K</p>
                     </div>
                   </div>
 
@@ -294,7 +294,7 @@ const ManagerSalesPerformance = () => {
         <Dialog open={showDetailsModal} onOpenChange={setShowDetailsModal}>
           <DialogContent className="sm:max-w-2xl bg-slate-950">
             <DialogHeader className="border-b border-slate-800 pb-4">
-              <DialogTitle className="text-2xl text-white">Performance Details</DialogTitle>
+              <DialogTitle className="text-xl text-white">Performance Details</DialogTitle>
             </DialogHeader>
             {selectedSalesman && (
               <div className="space-y-6">
@@ -302,10 +302,10 @@ const ManagerSalesPerformance = () => {
                 <div className="pb-4 border-b border-slate-800 bg-gradient-to-r from-purple-950/30 to-blue-950/30 p-4 rounded-lg">
                   <div className="flex items-start justify-between gap-4">
                     <div>
-                      <h3 className="text-3xl font-bold text-white">{selectedSalesman.name}</h3>
+                      <h3 className="text-2xl font-bold text-white">{selectedSalesman.name}</h3>
                       <p className="text-gray-300 text-sm mt-2">📧 {selectedSalesman.email}</p>
                     </div>
-                    <Badge className={`${getAchievementBg(selectedSalesman.achievement)} text-lg px-4 py-2`}>
+                    <Badge className={`${getAchievementBg(selectedSalesman.achievement)} text-sm px-3 py-1`}>
                       {selectedSalesman.achievement}% Achievement
                     </Badge>
                   </div>
@@ -320,15 +320,15 @@ const ManagerSalesPerformance = () => {
                   <div className="grid grid-cols-3 gap-4">
                     <div className="bg-gradient-to-br from-slate-800 to-slate-900 p-4 rounded-lg border border-slate-700">
                       <span className="text-xs font-semibold text-green-300 block mb-2 uppercase tracking-wide">💰 Total Revenue</span>
-                      <span className="text-2xl font-bold text-green-400">${(selectedSalesman.revenue / 1000).toFixed(0)}K</span>
+                      <span className="text-xl font-bold text-green-400">${(selectedSalesman.revenue / 1000).toFixed(0)}K</span>
                     </div>
                     <div className="bg-gradient-to-br from-slate-800 to-slate-900 p-4 rounded-lg border border-slate-700">
                       <span className="text-xs font-semibold text-blue-300 block mb-2 uppercase tracking-wide">📊 Quota</span>
-                      <span className="text-2xl font-bold text-blue-400">${(selectedSalesman.quota / 1000).toFixed(0)}K</span>
+                      <span className="text-xl font-bold text-blue-400">${(selectedSalesman.quota / 1000).toFixed(0)}K</span>
                     </div>
                     <div className="bg-gradient-to-br from-slate-800 to-slate-900 p-4 rounded-lg border border-slate-700">
                       <span className="text-xs font-semibold text-pink-300 block mb-2 uppercase tracking-wide">💎 Avg Deal Value</span>
-                      <span className="text-2xl font-bold text-pink-400">${(selectedSalesman.avgDealValue / 1000).toFixed(0)}K</span>
+                      <span className="text-xl font-bold text-pink-400">${(selectedSalesman.avgDealValue / 1000).toFixed(0)}K</span>
                     </div>
                   </div>
                 </div>
@@ -341,23 +341,23 @@ const ManagerSalesPerformance = () => {
                   </h4>
                   <div className="grid grid-cols-5 gap-3">
                     <div className="bg-gradient-to-br from-slate-800 to-slate-900 p-4 rounded-lg border border-slate-700 text-center">
-                      <p className="text-3xl font-bold text-white">{selectedSalesman.leads.total}</p>
+                      <p className="text-2xl font-bold text-white">{selectedSalesman.leads.total}</p>
                       <p className="text-xs text-slate-400 mt-1">Total Leads</p>
                     </div>
                     <div className="bg-gradient-to-br from-slate-800 to-slate-900 p-4 rounded-lg border border-slate-700 text-center">
-                      <p className="text-3xl font-bold text-slate-300">{selectedSalesman.leads.new}</p>
+                      <p className="text-2xl font-bold text-slate-300">{selectedSalesman.leads.new}</p>
                       <p className="text-xs text-slate-400 mt-1">New</p>
                     </div>
                     <div className="bg-gradient-to-br from-slate-800 to-slate-900 p-4 rounded-lg border border-slate-700 text-center">
-                      <p className="text-3xl font-bold text-orange-400">{selectedSalesman.leads.negotiation}</p>
+                      <p className="text-2xl font-bold text-orange-400">{selectedSalesman.leads.negotiation}</p>
                       <p className="text-xs text-slate-400 mt-1">Negotiating</p>
                     </div>
                     <div className="bg-gradient-to-br from-slate-800 to-slate-900 p-4 rounded-lg border border-slate-700 text-center">
-                      <p className="text-3xl font-bold text-green-400">{selectedSalesman.leads.won}</p>
+                      <p className="text-2xl font-bold text-green-400">{selectedSalesman.leads.won}</p>
                       <p className="text-xs text-slate-400 mt-1">Won</p>
                     </div>
                     <div className="bg-gradient-to-br from-slate-800 to-slate-900 p-4 rounded-lg border border-slate-700 text-center">
-                      <p className="text-3xl font-bold text-red-400">{selectedSalesman.leads.lost}</p>
+                      <p className="text-2xl font-bold text-red-400">{selectedSalesman.leads.lost}</p>
                       <p className="text-xs text-slate-400 mt-1">Lost</p>
                     </div>
                   </div>
@@ -372,7 +372,7 @@ const ManagerSalesPerformance = () => {
                   <div className="grid grid-cols-2 gap-4">
                     <div className="bg-gradient-to-br from-slate-800 to-slate-900 p-4 rounded-lg border border-slate-700">
                       <span className="text-xs font-semibold text-orange-300 block mb-2 uppercase tracking-wide">🎯 Win Rate</span>
-                      <p className="text-2xl font-bold text-orange-400">{selectedSalesman.winRate}%</p>
+                      <p className="text-xl font-bold text-orange-400">{selectedSalesman.winRate}%</p>
                       <div className="w-full bg-slate-700 h-2 rounded-full mt-3 overflow-hidden">
                         <div
                           className="h-full bg-orange-500 rounded-full"
@@ -382,7 +382,7 @@ const ManagerSalesPerformance = () => {
                     </div>
                     <div className="bg-gradient-to-br from-slate-800 to-slate-900 p-4 rounded-lg border border-slate-700">
                       <span className="text-xs font-semibold text-green-300 block mb-2 uppercase tracking-wide">📈 Quota Achievement</span>
-                      <p className="text-2xl font-bold text-green-400">{selectedSalesman.achievement}%</p>
+                      <p className="text-xl font-bold text-green-400">{selectedSalesman.achievement}%</p>
                       <div className="w-full bg-slate-700 h-2 rounded-full mt-3 overflow-hidden">
                         <div
                           className="h-full bg-green-500 rounded-full"

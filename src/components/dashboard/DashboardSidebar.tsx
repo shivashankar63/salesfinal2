@@ -51,8 +51,8 @@ const getMenuItems = (role: "owner" | "manager" | "salesman") => {
 
   const managerItems = [
     { icon: LayoutDashboard, label: "Dashboard", path: "/manager" },
+    { icon: Briefcase, label: "Projects", path: "/manager/projects" },
     { icon: Target, label: "Lead Pipeline", path: "/manager/pipeline" },
-    { icon: Briefcase, label: "Projects", path: "/manager" },
     { icon: Target, label: "Leads", path: "/manager/leads" },
     { icon: TrendingUp, label: "Sales Performance", path: "/manager/sales-performance" },
     { icon: Award, label: "Team Activity", path: "/manager/activity" },

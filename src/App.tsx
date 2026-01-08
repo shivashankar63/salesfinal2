@@ -20,6 +20,7 @@ import ManagerReports from "./pages/ManagerReports";
 import ManagerPeople from "./pages/ManagerPeople";
 import ManagerLeadLists from "./pages/ManagerLeadLists";
 import ManagerProjects from "./pages/ManagerProjects";
+import ManagerProjectDetails from "./pages/ManagerProjectDetails";
 import SalesMyLeads from "./pages/SalesMyLeads";
 import SalesPipeline from "./pages/SalesPipeline";
 import SalesLeaderboard from "./pages/SalesLeaderboard";
@@ -59,6 +60,7 @@ const App = () => (
           <Route path="/manager/people" element={<ManagerPeople />} />
           <Route path="/manager/lead-lists" element={<ManagerLeadLists />} />
           <Route path="/manager/projects" element={<ManagerProjects />} />
+          <Route path="/manager/projects/:id" element={<ManagerProjectDetails />} />
           <Route path="/sales/my-leads" element={<SalesMyLeads />} />
           <Route path="/sales/pipeline" element={<SalesPipeline />} />
           <Route path="/sales/leaderboard" element={<SalesLeaderboard />} />

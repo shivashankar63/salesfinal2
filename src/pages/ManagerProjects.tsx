@@ -4,15 +4,17 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { CalendarDays, Plus } from "lucide-react";
+import { CalendarDays, Plus, Upload, CheckCircle2, AlertCircle } from "lucide-react";
 import { useEffect, useState } from "react";
-import { getProjects, createProject } from "@/lib/supabase";
+import { useNavigate } from "react-router-dom";
+import { getProjects, createProject, createBulkLeads } from "@/lib/supabase";
 
 const ManagerProjects = () => {
   const [projects, setProjects] = useState<any[]>([]);
   const [showModal, setShowModal] = useState(false);
   const [creating, setCreating] = useState(false);
   const [form, setForm] = useState({ name: "", budget: "", status: "planned", start_date: "", end_date: "" });
+  const navigate = useNavigate();
 
   useEffect(() => {
     (async () => {
@@ -56,15 +58,22 @@ const ManagerProjects = () => {
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {projects.map((p: any) => (
-            <Card key={p.id} className="p-4 bg-white/5 border-white/10">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-lg bg-purple-600 text-white flex items-center justify-center">
+            <Card
+              key={p.id}
+              className="p-4 bg-white/5 border-white/10 hover:bg-white/10 transition-colors cursor-pointer focus:outline-none focus:ring-2 focus:ring-ring"
+              onClick={() => navigate(`/manager/projects/${p.id}`)}
+              role="button"
+              tabIndex={0}
+              onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') navigate(`/manager/projects/${p.id}`); }}
+            >
+              <div className="flex items-center gap-3 min-w-0">
+                <div className="w-10 h-10 rounded-lg bg-purple-600 text-white flex items-center justify-center flex-shrink-0">
                   <CalendarDays className="w-5 h-5" />
                 </div>
-                <div>
-                  <div className="text-white font-semibold">{p.name}</div>
-                  <div className="text-xs text-slate-400">{p.status} • Budget: ${p.budget || 0}</div>
-                  <div className="text-xs text-slate-500">{p.start_date || "-"} → {p.end_date || "-"}</div>
+                <div className="min-w-0">
+                  <div className="text-white font-semibold truncate break-words">{p.name}</div>
+                  <div className="text-xs text-slate-400 overflow-hidden text-ellipsis whitespace-nowrap">{p.status} • Budget: ${p.budget || 0}</div>
+                  <div className="text-xs text-slate-500 overflow-hidden text-ellipsis whitespace-nowrap">{p.start_date || "-"} → {p.end_date || "-"}</div>
                 </div>
               </div>
             </Card>
