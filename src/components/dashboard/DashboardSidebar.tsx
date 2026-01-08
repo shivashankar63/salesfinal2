@@ -1,9 +1,8 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import {
   LayoutDashboard,
   Users,
-  FolderKanban,
   BarChart3,
   Settings,
   LogOut,
@@ -15,7 +14,6 @@ import {
   Target,
   LineChart,
   PieChart,
-  Zap,
   Award,
   Phone,
   FileText,
@@ -52,22 +50,18 @@ const getMenuItems = (role: "owner" | "manager" | "salesman") => {
   ];
 
   const managerItems = [
-    ...baseItems,
-    { icon: Users, label: "My Team", path: "/manager/team" },
+    { icon: LayoutDashboard, label: "Dashboard", path: "/manager" },
     { icon: Target, label: "Lead Pipeline", path: "/manager/pipeline" },
-    { icon: BarChart3, label: "Team Performance", path: "/manager/performance" },
-    { icon: Zap, label: "Activity Log", path: "/manager/activity" },
-    { icon: FileText, label: "Reports", path: "/manager/reports" },
-    { icon: Settings, label: "Settings", path: "/settings" },
+    { icon: Briefcase, label: "Projects", path: "/manager" },
+    { icon: Target, label: "Leads", path: "/manager/leads" },
+    { icon: TrendingUp, label: "Sales Performance", path: "/manager/sales-performance" },
+    { icon: Award, label: "Team Activity", path: "/manager/activity" },
   ];
 
   const salesmanItems = [
     ...baseItems,
     { icon: Phone, label: "My Leads", path: "/sales/my-leads" },
     { icon: Target, label: "Pipeline", path: "/sales/pipeline" },
-    { icon: Award, label: "Leaderboard", path: "/sales/leaderboard" },
-    { icon: LineChart, label: "My Stats", path: "/sales/stats" },
-    { icon: FileText, label: "Proposals", path: "/sales/proposals" },
     { icon: Settings, label: "Settings", path: "/settings" },
   ];
 
@@ -79,6 +73,7 @@ const getMenuItems = (role: "owner" | "manager" | "salesman") => {
 const DashboardSidebar = ({ role }: SidebarProps) => {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [isMobileOpen, setIsMobileOpen] = useState(false);
+  const [userEmail, setUserEmail] = useState<string>("");
   const location = useLocation();
   const navigate = useNavigate();
   const menuItems = getMenuItems(role);
@@ -99,6 +94,15 @@ const DashboardSidebar = ({ role }: SidebarProps) => {
     await supabase.auth.signOut();
     navigate("/", { replace: true });
   };
+
+  useEffect(() => {
+    const fetchUser = async () => {
+      const { data } = await supabase.auth.getUser();
+      const email = data?.user?.email || "User";
+      setUserEmail(email);
+    };
+    fetchUser();
+  }, []);
 
   const SidebarContent = () => (
     <>
@@ -172,7 +176,7 @@ const DashboardSidebar = ({ role }: SidebarProps) => {
               {!isCollapsed && (
                 <>
                   <div className="flex-1 text-left">
-                    <p className="text-sm font-medium text-sidebar-foreground">John Doe</p>
+                    <p className="text-sm font-medium text-sidebar-foreground">{userEmail}</p>
                     <p className="text-xs text-sidebar-foreground/60">{roleLabels[role]}</p>
                   </div>
                   <ChevronDown className="w-4 h-4 text-sidebar-foreground/60" />

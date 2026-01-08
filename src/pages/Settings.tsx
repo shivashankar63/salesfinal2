@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import DashboardSidebar from "@/components/dashboard/DashboardSidebar";
 import { Building2, Users, Bell, CreditCard, Shield, Globe, Save } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -10,9 +11,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useState } from "react";
+import { getCurrentUser, getUserById } from "@/lib/supabase";
 
 const Settings = () => {
+  const [sidebarRole, setSidebarRole] = useState<"owner" | "manager" | "salesman">("owner");
   const [formData, setFormData] = useState({
     companyName: "SalesFlow Corp",
     industry: "SaaS",
@@ -25,6 +27,22 @@ const Settings = () => {
     autoAssignment: true,
   });
 
+  useEffect(() => {
+    const loadRole = async () => {
+      try {
+        const authUser = await getCurrentUser();
+        if (authUser?.id) {
+          const { data } = await getUserById(authUser.id);
+          const role = data?.role as "owner" | "manager" | "salesman" | undefined;
+          if (role) setSidebarRole(role);
+        }
+      } catch (error) {
+        console.error("Failed to load user role for settings sidebar", error);
+      }
+    };
+    loadRole();
+  }, []);
+
   const handleSave = () => {
     console.log("Saving settings:", formData);
     alert("Settings saved successfully!");
@@ -32,7 +50,7 @@ const Settings = () => {
 
   return (
     <div className="flex min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
-      <DashboardSidebar role="owner" />
+      <DashboardSidebar role={sidebarRole} />
       <main className="flex-1 p-4 lg:p-8 pt-16 lg:pt-8 overflow-auto">
         <div className="max-w-4xl mx-auto">
           <div className="mb-8">

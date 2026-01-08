@@ -8,12 +8,18 @@ import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
 import OwnerDashboard from "./pages/OwnerDashboard";
 import ManagerDashboard from "./pages/ManagerDashboard";
+import ManagerLeads from "./pages/ManagerLeads";
+import ManagerSales from "./pages/ManagerSales";
+import ManagerSalesPerformance from "./pages/ManagerSalesPerformance";
 import SalesmanDashboard from "./pages/SalesmanDashboard";
 import ManagerTeam from "./pages/ManagerTeam";
 import ManagerPipeline from "./pages/ManagerPipeline";
 import ManagerPerformance from "./pages/ManagerPerformance";
 import ManagerActivity from "./pages/ManagerActivity";
 import ManagerReports from "./pages/ManagerReports";
+import ManagerPeople from "./pages/ManagerPeople";
+import ManagerLeadLists from "./pages/ManagerLeadLists";
+import ManagerProjects from "./pages/ManagerProjects";
 import SalesMyLeads from "./pages/SalesMyLeads";
 import SalesPipeline from "./pages/SalesPipeline";
 import SalesLeaderboard from "./pages/SalesLeaderboard";
@@ -42,11 +48,17 @@ const App = () => (
           <Route path="/owner" element={<OwnerDashboard />} />
           <Route path="/manager" element={<ManagerDashboard />} />
           <Route path="/salesman" element={<SalesmanDashboard />} />
+          <Route path="/manager/leads" element={<ManagerLeads />} />
+          <Route path="/manager/sales" element={<ManagerSales />} />
+          <Route path="/manager/sales-performance" element={<ManagerSalesPerformance />} />
           <Route path="/manager/team" element={<ManagerTeam />} />
           <Route path="/manager/pipeline" element={<ManagerPipeline />} />
           <Route path="/manager/performance" element={<ManagerPerformance />} />
           <Route path="/manager/activity" element={<ManagerActivity />} />
           <Route path="/manager/reports" element={<ManagerReports />} />
+          <Route path="/manager/people" element={<ManagerPeople />} />
+          <Route path="/manager/lead-lists" element={<ManagerLeadLists />} />
+          <Route path="/manager/projects" element={<ManagerProjects />} />
           <Route path="/sales/my-leads" element={<SalesMyLeads />} />
           <Route path="/sales/pipeline" element={<SalesPipeline />} />
           <Route path="/sales/leaderboard" element={<SalesLeaderboard />} />

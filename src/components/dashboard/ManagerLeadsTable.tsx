@@ -13,7 +13,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { getLeads, getUsers, supabase } from "@/lib/supabase";
+import { getLeads, getUsers, supabase, subscribeToLeads } from "@/lib/supabase";
 
 interface Lead {
   id: string;
@@ -58,6 +58,32 @@ const ManagerLeadsTable = () => {
       }
     };
     fetchLeads();
+
+    // Subscribe to realtime lead changes
+    const channel = subscribeToLeads((payload: any) => {
+      const { eventType, new: newRow, old: oldRow } = payload;
+      setLeads((prev) => {
+        if (eventType === "INSERT" && newRow) {
+          // Prepend new lead if not already present
+          const exists = prev.some((l) => l.id === newRow.id);
+          return exists ? prev : [newRow as any, ...prev];
+        }
+        if (eventType === "UPDATE" && newRow) {
+          return prev.map((l) => (l.id === newRow.id ? { ...(l as any), ...(newRow as any) } : l));
+        }
+        if (eventType === "DELETE" && oldRow) {
+          return prev.filter((l) => l.id !== oldRow.id);
+        }
+        return prev;
+      });
+    });
+
+    return () => {
+      try {
+        // Clean up the subscription
+        supabase.removeChannel(channel);
+      } catch {}
+    };
   }, []);
 
   const filteredLeads = leads.filter((lead) => {

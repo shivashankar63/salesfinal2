@@ -1,14 +1,9 @@
+import { useState, useEffect } from "react";
 import DashboardSidebar from "@/components/dashboard/DashboardSidebar";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Clock, Phone, Mail, FileText, CheckCircle2 } from "lucide-react";
-
-const activityLog = [
-  { id: 1, type: "call", title: "Called Jane @ Globex", owner: "Sam", time: "09:10" },
-  { id: 2, type: "email", title: "Sent proposal to Acme", owner: "Sally", time: "10:20" },
-  { id: 3, type: "note", title: "Notes added for Umbrella", owner: "Emma", time: "11:05" },
-  { id: 4, type: "deal", title: "Closed won - Initech", owner: "Steve", time: "12:40" },
-];
+import { Clock, Phone, Mail, FileText, CheckCircle2, Loader } from "lucide-react";
+import { getCurrentUser, getUsers, getLeads, getActivities, subscribeToActivities } from "@/lib/supabase";
 
 const iconMap: Record<string, any> = {
   call: Phone,
@@ -24,7 +19,107 @@ const colorMap: Record<string, string> = {
   deal: "bg-green-500/15 text-green-200 border-green-500/20",
 };
 
+interface ActivityWithDetails {
+  id: string;
+  type: string;
+  title: string;
+  description?: string;
+  owner: string;
+  created_at: string;
+  user_id: string;
+}
+
 const ManagerActivity = () => {
+  const [activities, setActivities] = useState<ActivityWithDetails[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [teamMembers, setTeamMembers] = useState<Record<string, string>>({});
+
+  useEffect(() => {
+    let cleanup: (() => void) | undefined;
+
+    const fetchData = async () => {
+      try {
+        const manager = await getCurrentUser();
+        if (!manager) {
+          setLoading(false);
+          return;
+        }
+
+        // Get all users to map IDs to names
+        const { data: users } = await getUsers();
+        const userMap: Record<string, string> = {};
+        (users || []).forEach((u: any) => {
+          userMap[u.id] = u.full_name || u.email?.split("@")[0] || u.id;
+        });
+        setTeamMembers(userMap);
+
+        // Get all activities (manager can see team's activities)
+        const { data: allActivities } = await getActivities();
+        const enriched = (allActivities || [])
+          .map((a: any) => ({
+            ...a,
+            type: (a.activity_type || a.type || "note").toLowerCase(),
+            owner: userMap[a.user_id] || "Unknown",
+          }))
+          .sort((a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+          .slice(0, 50); // Last 50 activities
+
+        setActivities(enriched);
+
+        // Subscribe to all activities for realtime updates
+        const subs: any[] = [];
+        (users || []).forEach((u: any) => {
+          const sub = subscribeToActivities(u.id, async () => {
+            try {
+              const { data: updated } = await getActivities();
+              const enriched = (updated || [])
+                .map((a: any) => ({
+                  ...a,
+                  type: (a.activity_type || a.type || "note").toLowerCase(),
+                  owner: userMap[a.user_id] || "Unknown",
+                }))
+                .sort((a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+                .slice(0, 50);
+              setActivities(enriched);
+            } catch (e) {
+              console.error("Failed to refresh activities", e);
+            }
+          });
+          subs.push(sub);
+        });
+
+        cleanup = () => {
+          subs.forEach(sub => {
+            try { sub.unsubscribe?.(); } catch {}
+          });
+        };
+      } catch (error) {
+        console.error("Error loading manager activities:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+    return () => { cleanup?.(); };
+  }, []);
+
+  const formatTime = (isoString: string) => {
+    const date = new Date(isoString);
+    const now = new Date();
+    const diffMs = now.getTime() - date.getTime();
+    const diffMins = Math.floor(diffMs / 60000);
+    const diffHours = Math.floor(diffMs / 3600000);
+    const diffDays = Math.floor(diffMs / 86400000);
+
+    if (diffMins < 60) return `${diffMins}m ago`;
+    if (diffHours < 24) return `${diffHours}h ago`;
+    if (diffDays === 1) return "Yesterday";
+    if (diffDays < 7) return `${diffDays}d ago`;
+    
+    return date.toLocaleDateString();
+  };
+
   return (
     <div className="flex min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
       <DashboardSidebar role="manager" />
@@ -32,31 +127,45 @@ const ManagerActivity = () => {
         <div className="mb-8 flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold text-white">Activity Log</h1>
-            <p className="text-slate-400">Recent calls, emails, notes and deals</p>
+            <p className="text-slate-400">Team-wide calls, emails, notes and deals</p>
           </div>
-          <div className="text-slate-400 flex items-center gap-2"><Clock className="w-4 h-4" /> Today</div>
+          <div className="text-slate-400 flex items-center gap-2"><Clock className="w-4 h-4" /> Live</div>
         </div>
 
         <Card className="p-4 bg-white/5 border-white/10">
-          <div className="space-y-3">
-            {activityLog.map((item) => {
-              const Icon = iconMap[item.type];
-              return (
-                <div key={item.id} className="flex items-center justify-between p-3 bg-white/5 rounded-lg border border-white/10">
-                  <div className="flex items-center gap-3">
-                    <Badge className={colorMap[item.type]} variant="outline">
-                      <Icon className="w-4 h-4" />
-                    </Badge>
-                    <div>
-                      <div className="text-white font-medium">{item.title}</div>
-                      <div className="text-xs text-slate-400">Owner: {item.owner}</div>
+          {loading ? (
+            <div className="flex items-center justify-center py-12">
+              <Loader className="w-6 h-6 animate-spin text-purple-500 mr-2" />
+              <span className="text-slate-300">Loading activities...</span>
+            </div>
+          ) : activities.length === 0 ? (
+            <div className="text-center py-8">
+              <Clock className="w-12 h-12 text-slate-600 mx-auto mb-2" />
+              <p className="text-slate-400">No activities yet.</p>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {activities.map((item) => {
+                const Icon = iconMap[item.type] || FileText;
+                return (
+                  <div key={item.id} className="flex items-center justify-between p-3 bg-white/5 rounded-lg border border-white/10 hover:bg-white/10 transition-colors">
+                    <div className="flex items-center gap-3 flex-1 min-w-0">
+                      <Badge className={colorMap[item.type] || colorMap.note} variant="outline">
+                        <Icon className="w-4 h-4" />
+                      </Badge>
+                      <div className="flex-1 min-w-0">
+                        <div className="text-white font-medium truncate">{item.title || "Activity"}</div>
+                        <div className="text-xs text-slate-400">
+                          {item.owner} {item.description ? `• ${item.description.substring(0, 40)}...` : ""}
+                        </div>
+                      </div>
                     </div>
+                    <div className="text-xs text-slate-400 ml-2 whitespace-nowrap">{formatTime(item.created_at)}</div>
                   </div>
-                  <div className="text-xs text-slate-400">{item.time}</div>
-                </div>
-              );
-            })}
-          </div>
+                );
+              })}
+            </div>
+          )}
         </Card>
       </main>
     </div>

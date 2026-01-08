@@ -1,35 +1,49 @@
 import { createClient } from '@supabase/supabase-js';
 
-const supabaseUrl = 'https://uvqlonqtlqypxqatgbih.supabase.co';
-const supabaseAnonKey = 'sb_publishable_A8iz_SOWHx_G5eKQZGgfMg_csYrQ5Q8';
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://uvqlonqtlqypxqatgbih.supabase.co';
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || 'sb_publishable_A8iz_SOWHx_G5eKQZGgfMg_csYrQ5Q8';
+
+if (!supabaseUrl || !supabaseAnonKey) {
+  console.error('Missing Supabase environment variables. Please check your .env.local file.');
+}
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
-// ---------- Hardcoded fallback data (used when DB unavailable or empty) ----------
-const sampleUsers = [
-  { id: "00000000-0000-0000-0000-000000000001", email: "owner@salesflow.com", full_name: "Alice Owner", role: "owner" },
-  { id: "00000000-0000-0000-0000-000000000002", email: "manager@salesflow.com", full_name: "Mark Manager", role: "manager" },
-  { id: "00000000-0000-0000-0000-000000000003", email: "sally@salesflow.com", full_name: "Sally Seller", role: "salesman" },
-  { id: "00000000-0000-0000-0000-000000000004", email: "sam@salesflow.com", full_name: "Sam Seller", role: "salesman" },
-];
+const logSupabaseError = (context: string, error: any) => {
+  if (error) {
+    console.error(`[Supabase Error in ${context}]`, {
+      message: error?.message || error,
+      details: error?.details,
+      hint: error?.hint,
+      code: error?.code,
+      fullError: error
+    });
+  }
+};
 
-const sampleLeads = [
-  { id: "20000000-0000-0000-0000-000000000001", company_name: "Acme Corp", contact_name: "Jane Roe", contact_email: "jane@acme.com", contact_phone: "+1-555-1010", status: "qualified", value: 75000, assigned_to: sampleUsers[2].id, description: "Looking for CRM migration", created_at: new Date().toISOString() },
-  { id: "20000000-0000-0000-0000-000000000002", company_name: "Globex", contact_name: "Will Smith", contact_email: "will@globex.com", contact_phone: "+1-555-2020", status: "negotiation", value: 120000, assigned_to: sampleUsers[3].id, description: "Negotiating multi-region rollout", created_at: new Date().toISOString() },
-  { id: "20000000-0000-0000-0000-000000000003", company_name: "Initech", contact_name: "Peter Gibbons", contact_email: "peter@initech.com", contact_phone: "+1-555-3030", status: "won", value: 50000, assigned_to: sampleUsers[2].id, description: "Closed for starter tier", created_at: new Date().toISOString() },
-  { id: "20000000-0000-0000-0000-000000000004", company_name: "Soylent", contact_name: "Linda Green", contact_email: "linda@soylent.com", contact_phone: "+1-555-4040", status: "new", value: 30000, assigned_to: sampleUsers[3].id, description: "Initial discovery set", created_at: new Date().toISOString() },
-];
+// Test connection function
+export const testConnection = async () => {
+  try {
+    console.log('[Supabase] Testing connection...');
+    console.log('[Supabase] URL:', supabaseUrl);
+    console.log('[Supabase] Key (first 20 chars):', supabaseAnonKey.substring(0, 20) + '...');
+    
+    const { data, error } = await supabase.from('users').select('count', { count: 'exact', head: true });
+    
+    if (error) {
+      console.error('[Supabase] Connection test failed:', error);
+      return { success: false, error };
+    }
+    
+    console.log('[Supabase] Connection successful!');
+    return { success: true, error: null };
+  } catch (err) {
+    console.error('[Supabase] Connection test error:', err);
+    return { success: false, error: err };
+  }
+};
 
-const sampleActivities = [
-  { id: "30000000-0000-0000-0000-000000000001", user_id: sampleUsers[2].id, lead_id: sampleLeads[0].id, type: "call", title: "Discovery call", description: "Discussed migration scope", created_at: new Date().toISOString() },
-  { id: "30000000-0000-0000-0000-000000000002", user_id: sampleUsers[3].id, lead_id: sampleLeads[1].id, type: "note", title: "Pricing sent", description: "Shared proposal v2", created_at: new Date().toISOString() },
-  { id: "30000000-0000-0000-0000-000000000003", user_id: sampleUsers[2].id, lead_id: sampleLeads[2].id, type: "deal", title: "Closed won", description: "Signed starter tier", created_at: new Date().toISOString() },
-];
-
-const sampleQuotas = [
-  { id: "40000000-0000-0000-0000-000000000001", user_id: sampleUsers[2].id, target_amount: 150000, period_start: new Date().toISOString(), period_end: new Date().toISOString() },
-  { id: "40000000-0000-0000-0000-000000000002", user_id: sampleUsers[3].id, target_amount: 180000, period_start: new Date().toISOString(), period_end: new Date().toISOString() },
-];
+// No hardcoded sample data. All data is read from Supabase.
 
 // Auth functions
 export const signUpWithEmail = async (email: string, password: string) => {
@@ -60,16 +74,8 @@ export const getCurrentUser = async () => {
 
 // Database functions for Users
 export const getUsers = async () => {
-  try {
-    const { data, error } = await supabase
-      .from('users')
-      .select('*');
-    if (error) throw error;
-    return { data: data && data.length ? data : sampleUsers, error: null };
-  } catch (error) {
-    console.warn('Using fallback users due to error:', error);
-    return { data: sampleUsers, error: null };
-  }
+  const { data, error } = await supabase.from('users').select('*');
+  return { data: data || [], error };
 };
 
 export const getUserById = async (id: string) => {
@@ -82,8 +88,7 @@ export const getUserById = async (id: string) => {
     if (error) throw error;
     return { data, error: null };
   } catch (error) {
-    const fallback = sampleUsers.find(u => u.id === id) || null;
-    return { data: fallback, error: null };
+    return { data: null, error };
   }
 };
 
@@ -91,13 +96,22 @@ export const createUser = async (userData: {
   email: string;
   full_name: string;
   role: 'owner' | 'manager' | 'salesman';
+  phone?: string;
   avatar_url?: string;
 }) => {
   try {
+    const payload = { ...userData } as any;
+    if (!payload.phone) delete payload.phone; // avoid schema errors if column missing
+
     const { data, error } = await supabase
       .from('users')
-      .insert([userData])
+      .insert([payload])
       .select();
+
+    if (error) {
+      logSupabaseError('createUser', error);
+    }
+
     return { data, error };
   } catch (error) {
     console.warn('Create user failed, using fallback:', error);
@@ -116,28 +130,12 @@ export const updateUser = async (id: string, updates: any) => {
 
 // Database functions for Leads
 export const getLeads = async (filters?: { status?: string; assignedTo?: string }) => {
-  try {
-    let query = supabase.from('leads').select('*');
-    if (filters?.status) query = query.eq('status', filters.status);
-    if (filters?.assignedTo) query = query.eq('assigned_to', filters.assignedTo);
-    const { data, error } = await query;
-    if (error) throw error;
-    let result = data || [];
-    if (filters?.assignedTo) {
-      result = result.filter(l => l.assigned_to === filters.assignedTo);
-    }
-    if (!result.length) {
-      result = sampleLeads.filter(l => !filters?.assignedTo || l.assigned_to === filters.assignedTo);
-    }
-    return { data: result, error: null };
-  } catch (error) {
-    console.warn('Using fallback leads due to error:', error);
-    const filtered = sampleLeads.filter(l =>
-      (!filters?.status || l.status === filters.status) &&
-      (!filters?.assignedTo || l.assigned_to === filters.assignedTo)
-    );
-    return { data: filtered, error: null };
-  }
+  let query = supabase.from('leads').select('*');
+  if (filters?.status) query = query.eq('status', filters.status);
+  if (filters?.assignedTo) query = query.eq('assigned_to', filters.assignedTo);
+  const { data, error } = await query;
+  logSupabaseError('getLeads', error);
+  return { data: data || [], error };
 };
 
 export const getLeadById = async (id: string) => {
@@ -150,8 +148,7 @@ export const getLeadById = async (id: string) => {
     if (error) throw error;
     return { data, error: null };
   } catch (error) {
-    const fallback = sampleLeads.find(l => l.id === id) || null;
-    return { data: fallback, error: null };
+    return { data: null, error };
   }
 };
 
@@ -162,14 +159,36 @@ export const createLead = async (leadData: {
   phone: string;
   status: 'new' | 'qualified' | 'negotiation' | 'won' | 'lost';
   value: number;
-  assigned_to?: string;
+  assigned_to?: string | null;
+  project_id: string;
   description?: string;
 }) => {
+  console.log('[createLead] Attempting to create lead:', leadData);
+  
+  // Get current user to set created_by
+  const currentUser = await getCurrentUser();
+  if (!currentUser) {
+    throw new Error('You must be logged in to create a lead');
+  }
+  
+  const leadWithCreator = {
+    ...leadData,
+    created_by: currentUser.id,
+  };
+  
   const { data, error } = await supabase
     .from('leads')
-    .insert([leadData])
+    .insert([leadWithCreator])
     .select();
-  return { data, error };
+  
+  if (error) {
+    console.error('[createLead] Failed to create lead:', error);
+    logSupabaseError('createLead', error);
+    throw new Error(error.message || 'Failed to create lead');
+  }
+  
+  console.log('[createLead] Successfully created lead:', data);
+  return { data, error: null };
 };
 
 export const updateLead = async (id: string, updates: any) => {
@@ -178,6 +197,7 @@ export const updateLead = async (id: string, updates: any) => {
     .update(updates)
     .eq('id', id)
     .select();
+  logSupabaseError('updateLead', error);
   return { data, error };
 };
 
@@ -229,32 +249,28 @@ export const updateTeam = async (id: string, updates: any) => {
 
 // Database functions for Activities
 export const getActivities = async (userId?: string) => {
-  try {
-    let query = supabase.from('activities').select('*');
-    if (userId) query = query.eq('user_id', userId);
-    const { data, error } = await query.order('created_at', { ascending: false });
-    if (error) throw error;
-    const filtered = userId ? (data || []).filter(a => a.user_id === userId) : data || [];
-    return { data: filtered.length ? filtered : (userId ? sampleActivities.filter(a => a.user_id === userId) : sampleActivities), error: null };
-  } catch (error) {
-    console.warn('Using fallback activities due to error:', error);
-    return { data: userId ? sampleActivities.filter(a => a.user_id === userId) : sampleActivities, error: null };
-  }
+  let query = supabase.from('activities').select('*');
+  if (userId) query = query.eq('user_id', userId);
+  const { data, error } = await query.order('created_at', { ascending: false });
+  return { data: data || [], error };
+};
+
+export const getActivitiesForLead = async (leadId: string) => {
+  const { data, error } = await supabase
+    .from('activities')
+    .select('*')
+    .eq('lead_id', leadId)
+    .order('created_at', { ascending: false });
+  return { data: data || [], error };
 };
 
 // Database functions for Quotas
 export const getQuotas = async (userId: string) => {
-  try {
-    const { data, error } = await supabase
-      .from('quotas')
-      .select('*')
-      .eq('user_id', userId);
-    if (error) throw error;
-    return { data: data && data.length ? data : sampleQuotas.filter(q => q.user_id === userId), error: null };
-  } catch (error) {
-    console.warn('Using fallback quotas due to error:', error);
-    return { data: sampleQuotas.filter(q => q.user_id === userId), error: null };
-  }
+  const { data, error } = await supabase
+    .from('quotas')
+    .select('*')
+    .eq('user_id', userId);
+  return { data: data || [], error };
 };
 
 export const getQuotaById = async (id: string) => {
@@ -280,10 +296,7 @@ export const createActivity = async (activityData: {
       .select();
     return { data, error };
   } catch (error) {
-    console.warn('Create activity failed, using fallback:', error);
-    const fallback = { id: crypto.randomUUID?.() || Date.now().toString(), created_at: new Date().toISOString(), ...activityData };
-    sampleActivities.unshift(fallback as any);
-    return { data: [fallback], error: null };
+    return { data: null as any, error: error as any };
   }
 };
 
@@ -548,4 +561,102 @@ export const subscribeToActivities = (userId: string, callback: (data: any) => v
     .subscribe();
 
   return subscription;
+};
+
+export const subscribeToLeadActivities = (leadId: string, callback: (data: any) => void) => {
+  const subscription = supabase
+    .channel(`activities:lead:${leadId}`)
+    .on(
+      'postgres_changes',
+      {
+        event: '*',
+        schema: 'public',
+        table: 'activities',
+        filter: `lead_id=eq.${leadId}`
+      },
+      (payload) => callback(payload)
+    )
+    .subscribe();
+
+  return subscription;
+};
+
+// Users real-time subscription
+export const subscribeToUsers = (callback: (data: any) => void) => {
+  const subscription = supabase
+    .channel('users')
+    .on(
+      'postgres_changes',
+      { event: '*', schema: 'public', table: 'users' },
+      (payload) => callback(payload)
+    )
+    .subscribe();
+
+  return subscription;
+};
+
+// Leads real-time subscription for a specific salesperson
+export const subscribeToLeadsForUser = (userId: string, callback: (data: any) => void) => {
+  const subscription = supabase
+    .channel(`leads:assigned_to:${userId}`)
+    .on(
+      'postgres_changes',
+      { event: '*', schema: 'public', table: 'leads', filter: `assigned_to=eq.${userId}` },
+      (payload) => callback(payload)
+    )
+    .subscribe();
+
+  return subscription;
+};
+
+// Lead Lists (Saved Filters)
+export const getLeadLists = async () => {
+  try {
+    const { data, error } = await supabase.from('lead_lists').select('*');
+    if (error) throw error;
+    return { data: data || [], error: null };
+  } catch (error) {
+    return { data: [], error: error as any };
+  }
+};
+
+export const createLeadList = async (list: { name: string; filters: any }) => {
+  try {
+    const { data, error } = await supabase
+      .from('lead_lists')
+      .insert([{ name: list.name, filters: list.filters }])
+      .select();
+    if (error) throw error;
+    return { data, error: null };
+  } catch (error) {
+    return { data: null as any, error: error as any };
+  }
+};
+
+// Projects
+export const getProjects = async () => {
+  const { data, error } = await supabase.from('projects').select('*');
+  logSupabaseError('getProjects', error);
+  return { data: data || [], error };
+};
+
+export const createProject = async (project: {
+  name: string;
+  description?: string;
+  budget?: number;
+  status?: 'planned' | 'active' | 'paused' | 'completed';
+  owner_id?: string;
+  start_date?: string;
+  end_date?: string;
+}) => {
+  try {
+    const { data, error } = await supabase.from('projects').insert([{
+      ...project,
+      status: project.status || 'planned',
+    }]).select();
+    if (error) throw error;
+    return { data, error: null };
+  } catch (error) {
+    return { data: null as any, error: error as any };
+  }
 };

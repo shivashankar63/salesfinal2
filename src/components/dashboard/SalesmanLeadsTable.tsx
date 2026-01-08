@@ -14,7 +14,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { getLeads, getCurrentUser, supabase } from "@/lib/supabase";
+import { getLeads, getCurrentUser, supabase, subscribeToLeadsForUser, createActivity } from "@/lib/supabase";
 
 interface Lead {
   id: string;
@@ -42,11 +42,45 @@ const SalesmanLeadsTable = () => {
   const [updateMessage, setUpdateMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
 
   useEffect(() => {
+    let cleanup: (() => void) | undefined;
+
     const fetchLeads = async () => {
       try {
         const user = await getCurrentUser();
         if (user) {
           const { data } = await getLeads({ assignedTo: user.id });
+          setLeads(data || []);
+          // Realtime subscribe to this user's assigned leads
+          const sub = subscribeToLeadsForUser(user.id, (payload: any) => {
+            const et = payload?.eventType || payload?.type;
+            const newRow = payload?.new;
+            const oldRow = payload?.old;
+            if (et === 'INSERT') {
+              if (newRow && newRow.assigned_to === user.id) {
+                setLeads(prev => {
+                  const exists = prev.some(l => l.id === newRow.id);
+                  return exists ? prev.map(l => l.id === newRow.id ? newRow : l) : [...prev, newRow];
+                });
+              }
+            } else if (et === 'UPDATE') {
+              if (newRow?.assigned_to === user.id) {
+                setLeads(prev => prev.some(l => l.id === newRow.id)
+                  ? prev.map(l => l.id === newRow.id ? newRow : l)
+                  : [...prev, newRow]
+                );
+              } else if (oldRow?.assigned_to === user.id) {
+                // Lead moved away from this user
+                setLeads(prev => prev.filter(l => l.id !== oldRow.id));
+              }
+            } else if (et === 'DELETE') {
+              if (oldRow) {
+                setLeads(prev => prev.filter(l => l.id !== oldRow.id));
+              }
+            }
+          });
+          cleanup = () => { try { sub.unsubscribe?.(); } catch {} };
+        } else {
+          const { data } = await getLeads();
           setLeads(data || []);
         }
       } catch (error) {
@@ -56,6 +90,10 @@ const SalesmanLeadsTable = () => {
       }
     };
     fetchLeads();
+
+    return () => {
+      try { cleanup?.(); } catch {}
+    };
   }, []);
 
   const filteredLeads = leads.filter((lead) => {
@@ -90,18 +128,21 @@ const SalesmanLeadsTable = () => {
   };
 
   const handleCallLead = (lead: Lead) => {
-    if (lead.contact_phone) {
-      window.location.href = `tel:${lead.contact_phone}`;
+    const phone = (lead as any).contact_phone || (lead as any).phone;
+    if (phone) {
+      window.location.href = `tel:${phone}`;
     } else {
       alert("No phone number available for this lead");
     }
   };
 
   const handleMessageLead = (lead: Lead) => {
-    if (lead.contact_email) {
-      window.location.href = `mailto:${lead.contact_email}`;
-    } else if (lead.contact_phone) {
-      window.location.href = `sms:${lead.contact_phone}`;
+    const email = (lead as any).contact_email || (lead as any).email;
+    const phone = (lead as any).contact_phone || (lead as any).phone;
+    if (email) {
+      window.location.href = `mailto:${email}`;
+    } else if (phone) {
+      window.location.href = `sms:${phone}`;
     } else {
       alert("No contact information available for this lead");
     }
@@ -174,16 +215,17 @@ const SalesmanLeadsTable = () => {
     setUpdateMessage(null);
 
     try {
-      // Create activity record for the note
-      const { error } = await supabase
-        .from("activities")
-        .insert([{
-          user_id: (await getCurrentUser())?.id,
-          lead_id: selectedLead.id,
-          type: "note",
-          description: noteText,
-          created_at: new Date().toISOString(),
-        }]);
+      const user = await getCurrentUser();
+      const title = `Note - ${selectedLead.company_name}`;
+
+      // Use helper that matches table schema and includes required title
+      const { error } = await createActivity({
+        user_id: user?.id as string,
+        type: "note",
+        title,
+        description: noteText,
+        lead_id: selectedLead.id,
+      });
 
       if (error) {
         setUpdateMessage({ type: "error", text: error.message });
@@ -271,7 +313,7 @@ const SalesmanLeadsTable = () => {
             <tbody>
               {filteredLeads.length > 0 ? (
                 filteredLeads.map((lead) => (
-                  <tr key={lead.id} className="border-b border-border hover:bg-muted/50 transition-colors">
+                  <tr key={lead.id} className="border-b border-border hover:bg-muted/50 transition-colors cursor-pointer" onClick={() => handleViewDetails(lead)}>
                     <td className="py-3 px-4">
                       <div className="flex items-center gap-3">
                         <Avatar className="w-8 h-8">
@@ -284,15 +326,15 @@ const SalesmanLeadsTable = () => {
                     </td>
                     <td className="py-3 px-4">
                       <div className="text-sm text-foreground">{lead.contact_name}</div>
-                      {lead.contact_email && (
-                        <div className="text-xs text-muted-foreground">{lead.contact_email}</div>
-                      )}
+                      {(lead as any).contact_email || (lead as any).email ? (
+                        <div className="text-xs text-muted-foreground">{(lead as any).contact_email || (lead as any).email}</div>
+                      ) : null}
                     </td>
                     <td className="py-3 px-4">{getStatusBadge(lead.status)}</td>
                     <td className="py-3 px-4 text-right text-sm font-semibold text-foreground">
                       ${(lead.value / 1000).toFixed(0)}K
                     </td>
-                    <td className="py-3 px-4">
+                    <td className="py-3 px-4" onClick={(e) => e.stopPropagation()}>
                       <div className="flex justify-center gap-2">
                         <Button 
                           variant="ghost" 
@@ -478,8 +520,79 @@ const SalesmanLeadsTable = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Enhanced Lead Details Modal */}
+      <Dialog open={showDetailsModal} onOpenChange={setShowDetailsModal}>
+        <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto bg-slate-950">
+          <DialogHeader className="border-b border-slate-800 pb-4">
+            <DialogTitle className="text-2xl text-white">Lead Details</DialogTitle>
+          </DialogHeader>
+          {selectedLead && (
+            <div className="space-y-6">
+              {/* Header Section */}
+              <div className="pb-4 border-b border-slate-800 bg-gradient-to-r from-purple-950/30 to-blue-950/30 p-4 rounded-lg">
+                <div className="flex items-start justify-between gap-4 mb-3">
+                  <div>
+                    <h3 className="text-3xl font-bold text-white">{selectedLead.company_name}</h3>
+                    <p className="text-gray-300 text-sm mt-2">📞 {selectedLead.contact_name}</p>
+                  </div>
+                  <Badge className={`bg-blue-500/20 text-blue-300 border-blue-500/30 text-lg px-4 py-2`}>{selectedLead.status.toUpperCase()}</Badge>
+                </div>
+              </div>
+
+              {/* Contact Information */}
+              <div>
+                <h4 className="text-base font-bold text-white mb-3 flex items-center gap-2">
+                  <span className="w-1 h-1 bg-purple-400 rounded-full"></span>
+                  Contact Information
+                </h4>
+                <div className="grid grid-cols-2 gap-4">
+                  {((selectedLead as any).contact_email || (selectedLead as any).email) && (
+                    <div className="bg-gradient-to-br from-slate-800 to-slate-900 p-4 rounded-lg border border-slate-700 hover:border-purple-500/50 transition-all">
+                      <span className="text-xs font-semibold text-purple-300 block mb-2 uppercase tracking-wide">📧 Email</span>
+                      <a href={`mailto:${(selectedLead as any).contact_email || (selectedLead as any).email}`} className="text-blue-300 hover:text-blue-100 break-all text-sm font-medium">{(selectedLead as any).contact_email || (selectedLead as any).email}</a>
+                    </div>
+                  )}
+                  {((selectedLead as any).contact_phone || (selectedLead as any).phone) && (
+                    <div className="bg-gradient-to-br from-slate-800 to-slate-900 p-4 rounded-lg border border-slate-700 hover:border-purple-500/50 transition-all">
+                      <span className="text-xs font-semibold text-purple-300 block mb-2 uppercase tracking-wide">☎️ Phone</span>
+                      <a href={`tel:${(selectedLead as any).contact_phone || (selectedLead as any).phone}`} className="text-blue-300 hover:text-blue-100 text-sm font-medium">{(selectedLead as any).contact_phone || (selectedLead as any).phone}</a>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Deal Information */}
+              <div>
+                <h4 className="text-base font-bold text-white mb-3 flex items-center gap-2">
+                  <span className="w-1 h-1 bg-green-400 rounded-full"></span>
+                  Deal Information
+                </h4>
+                <div className="grid grid-cols-3 gap-4">
+                  <div className="bg-gradient-to-br from-slate-800 to-slate-900 p-4 rounded-lg border border-slate-700">
+                    <span className="text-xs font-semibold text-green-300 block mb-2 uppercase tracking-wide">💰 Deal Value</span>
+                    <span className="text-2xl font-bold text-green-400">${((selectedLead.value || 0) / 1000).toFixed(1)}K</span>
+                  </div>
+                  <div className="bg-gradient-to-br from-slate-800 to-slate-900 p-4 rounded-lg border border-slate-700">
+                    <span className="text-xs font-semibold text-blue-300 block mb-2 uppercase tracking-wide">📊 Status</span>
+                    <span className="text-lg font-bold text-blue-300 capitalize">{selectedLead.status}</span>
+                  </div>
+                  <div className="bg-gradient-to-br from-slate-800 to-slate-900 p-4 rounded-lg border border-slate-700">
+                    <span className="text-xs font-semibold text-orange-300 block mb-2 uppercase tracking-wide">📅 Created</span>
+                    <span className="text-sm font-bold text-orange-300">{new Date((selectedLead as any).created_at || Date.now()).toLocaleDateString()}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowDetailsModal(false)}>Close</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
 
 export default SalesmanLeadsTable;
+
