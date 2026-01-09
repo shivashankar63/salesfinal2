@@ -236,11 +236,29 @@ const ManagerLeads = () => {
       return;
     }
     
+    // Normalize status to match database enum values
+    // Database only accepts: 'new', 'qualified', 'proposal', 'closed_won', 'not_interested'
+    const normalizedStatus = normalizeStatus(status);
+    
+    // Validate that the normalized status is one of the allowed database values
+    const allowedStatuses = ['new', 'qualified', 'proposal', 'closed_won', 'not_interested'];
+    if (!allowedStatuses.includes(normalizedStatus)) {
+      console.error('Invalid normalized status:', { original: status, normalized: normalizedStatus });
+      alert(`Invalid status value: ${status}. Please try again.`);
+      return;
+    }
+    
     setUpdatingLeadId(leadId);
     try {
-      console.log('Updating lead status:', { leadId, status, selectedProject: selectedProject?.id });
+      console.log('Updating lead status:', { 
+        leadId, 
+        originalStatus: status, 
+        normalizedStatus,
+        selectedProject: selectedProject?.id 
+      });
       
-      const result = await updateLead(leadId, { status });
+      // Use normalized status for database update
+      const result = await updateLead(leadId, { status: normalizedStatus });
       console.log('Update result:', result);
       
       // Check if there was an error in the result
