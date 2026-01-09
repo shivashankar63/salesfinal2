@@ -231,15 +231,24 @@ const ManagerLeads = () => {
   };
 
   const handleStatusChange = async (leadId: string, status: string) => {
+    if (!leadId || !status) {
+      console.error('Invalid leadId or status:', { leadId, status });
+      return;
+    }
     setUpdatingLeadId(leadId);
     try {
-      await updateLead(leadId, { status });
+      console.log('Updating lead status:', { leadId, status });
+      const result = await updateLead(leadId, { status });
+      console.log('Update result:', result);
+      
+      // Refresh leads for the current project
       const leadsRes = await getLeads();
       const allLeads = leadsRes.data || [];
       const projectLeads = allLeads.filter((l: any) => l.project_id === selectedProject?.id);
       setLeads(projectLeads);
     } catch (error) {
       console.error('Failed to update status:', error);
+      alert(`Failed to update lead status: ${error instanceof Error ? error.message : 'Unknown error'}`);
     } finally {
       setUpdatingLeadId(null);
     }
@@ -587,18 +596,27 @@ const ManagerLeads = () => {
                           </Select>
                           <Select
                             value={lead.status}
-                            onValueChange={(value) => handleStatusChange(lead.id, value)}
+                            onValueChange={(value) => {
+                              console.log('Status change triggered:', { leadId: lead.id, newStatus: value, currentStatus: lead.status });
+                              handleStatusChange(lead.id, value);
+                            }}
                             disabled={updatingLeadId === lead.id}
                           >
-                            <SelectTrigger className="bg-white border-slate-200 text-slate-900 text-xs" onClick={(e) => e.stopPropagation()}>
+                            <SelectTrigger 
+                              className="bg-white border-slate-200 text-slate-900 text-xs" 
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                e.preventDefault();
+                              }}
+                            >
                               <SelectValue />
                             </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="new">New</SelectItem>
-                              <SelectItem value="qualified">Qualified</SelectItem>
-                              <SelectItem value="proposal">In Proposal</SelectItem>
-                              <SelectItem value="closed_won">Closed Won</SelectItem>
-                              <SelectItem value="not_interested">Not Interested</SelectItem>
+                            <SelectContent onClick={(e) => e.stopPropagation()}>
+                              <SelectItem value="new" onClick={(e) => e.stopPropagation()}>New</SelectItem>
+                              <SelectItem value="qualified" onClick={(e) => e.stopPropagation()}>Qualified</SelectItem>
+                              <SelectItem value="proposal" onClick={(e) => e.stopPropagation()}>In Proposal</SelectItem>
+                              <SelectItem value="closed_won" onClick={(e) => e.stopPropagation()}>Closed Won</SelectItem>
+                              <SelectItem value="not_interested" onClick={(e) => e.stopPropagation()}>Not Interested</SelectItem>
                             </SelectContent>
                           </Select>
                         </div>

@@ -124,7 +124,7 @@ if (loading) {
               navigate("/manager/sales-performance");
             }}
           >
-            <div className="flex items-start justify-between">
+            <div className="flex items-start justify-between pointer-events-none">
               <div>
                 <p className="text-sm font-medium text-slate-600 mb-1">Total Revenue</p>
                 <p className="text-2xl sm:text-3xl font-semibold text-slate-900">${(totalRevenue / 1000).toFixed(0)}K</p>
@@ -147,7 +147,7 @@ if (loading) {
               navigate("/manager/leads");
             }}
           >
-            <div className="flex items-start justify-between">
+            <div className="flex items-start justify-between pointer-events-none">
               <div>
                 <p className="text-sm font-medium text-slate-600 mb-1">Active Leads</p>
                 <p className="text-2xl sm:text-3xl font-semibold text-slate-900">{totalLeads}</p>
@@ -170,7 +170,7 @@ if (loading) {
               navigate("/manager/performance");
             }}
           >
-            <div className="flex items-start justify-between">
+            <div className="flex items-start justify-between pointer-events-none">
               <div>
                 <p className="text-sm font-medium text-slate-600 mb-1">Win Rate</p>
                 <p className="text-2xl sm:text-3xl font-semibold text-slate-900">{winRate}%</p>
@@ -193,7 +193,7 @@ if (loading) {
               navigate("/manager/projects");
             }}
           >
-            <div className="flex items-start justify-between">
+            <div className="flex items-start justify-between pointer-events-none">
               <div>
                 <p className="text-sm font-medium text-slate-600 mb-1">Active Projects</p>
                 <p className="text-2xl sm:text-3xl font-semibold text-slate-900">{projects.length}</p>
