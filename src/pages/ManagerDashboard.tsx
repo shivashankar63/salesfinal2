@@ -18,6 +18,7 @@ const ManagerDashboard = () => {
   const [showProjectModal, setShowProjectModal] = useState(false);
   const [projectForm, setProjectForm] = useState({ name: "", description: "", budget: "" });
   const [creatingProject, setCreatingProject] = useState(false);
+  const [selectedStatusFilter, setSelectedStatusFilter] = useState<string | null>(null);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -234,10 +235,14 @@ if (loading) {
 
           <div className="grid grid-cols-2 md:grid-cols-5 gap-3 sm:gap-4">
             <div 
-              className="text-center p-3 sm:p-4 rounded-lg bg-slate-50 border border-slate-200 hover:bg-slate-100 hover:border-slate-300 transition-all cursor-pointer"
+              className={`text-center p-3 sm:p-4 rounded-lg border transition-all cursor-pointer ${
+                selectedStatusFilter === 'new' 
+                  ? 'bg-slate-100 border-slate-400 shadow-md' 
+                  : 'bg-slate-50 border-slate-200 hover:bg-slate-100 hover:border-slate-300'
+              }`}
               onClick={(e) => {
                 e.stopPropagation();
-                navigate("/manager/leads?status=new");
+                setSelectedStatusFilter(selectedStatusFilter === 'new' ? null : 'new');
               }}
             >
               <div className="w-3 h-3 rounded-full bg-slate-400 mx-auto mb-2"></div>
@@ -246,10 +251,14 @@ if (loading) {
               <p className="text-xs text-slate-500 mt-1">${(leads.filter(l => l.status === 'new').reduce((sum, l) => sum + (l.value || 0), 0) / 1000).toFixed(0)}K</p>
             </div>
             <div 
-              className="text-center p-3 sm:p-4 rounded-lg bg-blue-50 border border-blue-200 hover:bg-blue-100 hover:border-blue-300 transition-all cursor-pointer"
+              className={`text-center p-3 sm:p-4 rounded-lg border transition-all cursor-pointer ${
+                selectedStatusFilter === 'qualified' 
+                  ? 'bg-blue-100 border-blue-400 shadow-md' 
+                  : 'bg-blue-50 border-blue-200 hover:bg-blue-100 hover:border-blue-300'
+              }`}
               onClick={(e) => {
                 e.stopPropagation();
-                navigate("/manager/leads?status=qualified");
+                setSelectedStatusFilter(selectedStatusFilter === 'qualified' ? null : 'qualified');
               }}
             >
               <div className="w-3 h-3 rounded-full bg-blue-500 mx-auto mb-2"></div>
@@ -258,10 +267,14 @@ if (loading) {
               <p className="text-xs text-slate-500 mt-1">${(leads.filter(l => l.status === 'qualified').reduce((sum, l) => sum + (l.value || 0), 0) / 1000).toFixed(0)}K</p>
             </div>
             <div 
-              className="text-center p-3 sm:p-4 rounded-lg bg-orange-50 border border-orange-200 hover:bg-orange-100 hover:border-orange-300 transition-all cursor-pointer"
+              className={`text-center p-3 sm:p-4 rounded-lg border transition-all cursor-pointer ${
+                selectedStatusFilter === 'negotiation' 
+                  ? 'bg-orange-100 border-orange-400 shadow-md' 
+                  : 'bg-orange-50 border-orange-200 hover:bg-orange-100 hover:border-orange-300'
+              }`}
               onClick={(e) => {
                 e.stopPropagation();
-                navigate("/manager/leads?status=negotiation");
+                setSelectedStatusFilter(selectedStatusFilter === 'negotiation' ? null : 'negotiation');
               }}
             >
               <div className="w-3 h-3 rounded-full bg-orange-500 mx-auto mb-2"></div>
@@ -270,10 +283,14 @@ if (loading) {
               <p className="text-xs text-slate-500 mt-1">${(leads.filter(l => l.status === 'negotiation').reduce((sum, l) => sum + (l.value || 0), 0) / 1000).toFixed(0)}K</p>
             </div>
             <div 
-              className="text-center p-3 sm:p-4 rounded-lg bg-green-50 border border-green-200 hover:bg-green-100 hover:border-green-300 transition-all cursor-pointer"
+              className={`text-center p-3 sm:p-4 rounded-lg border transition-all cursor-pointer ${
+                selectedStatusFilter === 'won' 
+                  ? 'bg-green-100 border-green-400 shadow-md' 
+                  : 'bg-green-50 border-green-200 hover:bg-green-100 hover:border-green-300'
+              }`}
               onClick={(e) => {
                 e.stopPropagation();
-                navigate("/manager/leads?status=won");
+                setSelectedStatusFilter(selectedStatusFilter === 'won' ? null : 'won');
               }}
             >
               <div className="w-3 h-3 rounded-full bg-green-500 mx-auto mb-2"></div>
@@ -282,10 +299,14 @@ if (loading) {
               <p className="text-xs text-slate-500 mt-1">${(totalRevenue / 1000).toFixed(0)}K</p>
             </div>
             <div 
-              className="text-center p-3 sm:p-4 rounded-lg bg-red-50 border border-red-200 hover:bg-red-100 hover:border-red-300 transition-all cursor-pointer"
+              className={`text-center p-3 sm:p-4 rounded-lg border transition-all cursor-pointer ${
+                selectedStatusFilter === 'lost' 
+                  ? 'bg-red-100 border-red-400 shadow-md' 
+                  : 'bg-red-50 border-red-200 hover:bg-red-100 hover:border-red-300'
+              }`}
               onClick={(e) => {
                 e.stopPropagation();
-                navigate("/manager/leads?status=lost");
+                setSelectedStatusFilter(selectedStatusFilter === 'lost' ? null : 'lost');
               }}
             >
               <div className="w-3 h-3 rounded-full bg-red-500 mx-auto mb-2"></div>
@@ -414,13 +435,36 @@ if (loading) {
 
         {/* Recent Leads */}
         <Card className="p-4 sm:p-6 bg-white border-slate-200 shadow-sm">
-            <div className="mb-4 sm:mb-6">
-            <h2 className="text-lg font-semibold text-slate-900">Recent Leads</h2>
-            <p className="text-sm text-slate-600 mt-1">Latest updates from your pipeline</p>
+            <div className="mb-4 sm:mb-6 flex items-center justify-between">
+              <div>
+                <h2 className="text-lg font-semibold text-slate-900">
+                  {selectedStatusFilter ? `${selectedStatusFilter.charAt(0).toUpperCase() + selectedStatusFilter.slice(1)} Leads` : 'Recent Leads'}
+                </h2>
+                <p className="text-sm text-slate-600 mt-1">
+                  {selectedStatusFilter 
+                    ? `Showing all ${selectedStatusFilter} leads from your pipeline`
+                    : 'Latest updates from your pipeline'}
+                </p>
+              </div>
+              {selectedStatusFilter && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setSelectedStatusFilter(null)}
+                  className="text-xs"
+                >
+                  Clear Filter
+                </Button>
+              )}
           </div>
-            {leads.length > 0 ? (
+            {(() => {
+              const filteredLeads = selectedStatusFilter 
+                ? leads.filter(l => l.status === selectedStatusFilter)
+                : leads.slice(0, 5);
+              
+              return filteredLeads.length > 0 ? (
             <div className="space-y-2">
-              {leads.slice(0, 5).map((lead) => (
+              {filteredLeads.map((lead) => (
                 <div 
                   key={lead.id} 
                   className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 p-3 sm:p-4 rounded-lg border border-slate-200 hover:border-slate-300 hover:shadow-sm transition-all cursor-pointer group"
@@ -453,10 +497,17 @@ if (loading) {
               <div className="w-16 h-16 rounded-full bg-slate-100 flex items-center justify-center mx-auto mb-4">
                 <Target className="w-8 h-8 text-slate-400" />
               </div>
-              <p className="text-slate-900 font-medium mb-1">No leads yet</p>
-              <p className="text-sm text-slate-600">Start adding leads to track your pipeline</p>
+              <p className="text-slate-900 font-medium mb-1">
+                {selectedStatusFilter ? `No ${selectedStatusFilter} leads` : 'No leads yet'}
+              </p>
+              <p className="text-sm text-slate-600">
+                {selectedStatusFilter 
+                  ? 'Try selecting a different status or clear the filter'
+                  : 'Start adding leads to track your pipeline'}
+              </p>
             </div>
-          )}
+          );
+            })()}
         </Card>
 
 
