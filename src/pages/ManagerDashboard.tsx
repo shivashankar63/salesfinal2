@@ -79,15 +79,21 @@ const ManagerDashboard = () => {
     }
   };
 
-  // Calculate metrics
+  // Normalize status to match leads page logic
+  const normalizeStatus = (status) => {
+    if (status === 'negotiation') return 'proposal';
+    if (status === 'won') return 'closed_won';
+    if (status === 'lost') return 'not_interested';
+    return status;
+  };
   const totalLeads = leads.length;
-  const newLeads = leads.filter(l => l.status === 'new').length;
-  const qualifiedLeads = leads.filter(l => l.status === 'qualified').length;
-  const negotiationLeads = leads.filter(l => l.status === 'negotiation').length;
-  const wonLeads = leads.filter(l => l.status === 'won').length;
-  const lostLeads = leads.filter(l => l.status === 'lost').length;
-  const totalRevenue = leads.filter(l => l.status === 'won').reduce((sum, l) => sum + (l.value || 0), 0);
-  const totalPipeline = leads.filter(l => ['new', 'qualified', 'negotiation'].includes(l.status)).reduce((sum, l) => sum + (l.value || 0), 0);
+  const newLeads = leads.filter(l => normalizeStatus(l.status) === 'new').length;
+  const qualifiedLeads = leads.filter(l => normalizeStatus(l.status) === 'qualified').length;
+  const negotiationLeads = leads.filter(l => normalizeStatus(l.status) === 'proposal').length;
+  const wonLeads = leads.filter(l => normalizeStatus(l.status) === 'closed_won').length;
+  const lostLeads = leads.filter(l => normalizeStatus(l.status) === 'not_interested').length;
+  const totalRevenue = leads.filter(l => normalizeStatus(l.status) === 'closed_won').reduce((sum, l) => sum + (l.value || 0), 0);
+  const totalPipeline = leads.filter(l => ['new', 'qualified', 'proposal'].includes(normalizeStatus(l.status))).reduce((sum, l) => sum + (l.value || 0), 0);
   const winRate = totalLeads > 0 ? Math.round((wonLeads / totalLeads) * 100) : 0;
 
 if (loading) {
@@ -240,15 +246,12 @@ if (loading) {
                   ? 'bg-slate-100 border-slate-400 shadow-md' 
                   : 'bg-slate-50 border-slate-200 hover:bg-slate-100 hover:border-slate-300'
               }`}
-              onClick={(e) => {
-                e.stopPropagation();
-                setSelectedStatusFilter(selectedStatusFilter === 'new' ? null : 'new');
-              }}
+              onClick={() => navigate('/manager/leads?status=new')}
             >
               <div className="w-3 h-3 rounded-full bg-slate-400 mx-auto mb-2"></div>
               <p className="text-xl sm:text-2xl font-semibold text-slate-900">{newLeads}</p>
               <p className="text-xs font-medium text-slate-600 mt-1">New</p>
-              <p className="text-xs text-slate-500 mt-1">${(leads.filter(l => l.status === 'new').reduce((sum, l) => sum + (l.value || 0), 0) / 1000).toFixed(0)}K</p>
+              <p className="text-xs text-slate-500 mt-1">${(leads.filter(l => normalizeStatus(l.status) === 'new').reduce((sum, l) => sum + (l.value || 0), 0) / 1000).toFixed(0)}K</p>
             </div>
             <div 
               className={`text-center p-3 sm:p-4 rounded-lg border transition-all cursor-pointer ${
@@ -256,15 +259,12 @@ if (loading) {
                   ? 'bg-blue-100 border-blue-400 shadow-md' 
                   : 'bg-blue-50 border-blue-200 hover:bg-blue-100 hover:border-blue-300'
               }`}
-              onClick={(e) => {
-                e.stopPropagation();
-                setSelectedStatusFilter(selectedStatusFilter === 'qualified' ? null : 'qualified');
-              }}
+              onClick={() => navigate('/manager/leads?status=qualified')}
             >
               <div className="w-3 h-3 rounded-full bg-blue-500 mx-auto mb-2"></div>
               <p className="text-xl sm:text-2xl font-semibold text-slate-900">{qualifiedLeads}</p>
               <p className="text-xs font-medium text-blue-700 mt-1">Qualified</p>
-              <p className="text-xs text-slate-500 mt-1">${(leads.filter(l => l.status === 'qualified').reduce((sum, l) => sum + (l.value || 0), 0) / 1000).toFixed(0)}K</p>
+              <p className="text-xs text-slate-500 mt-1">${(leads.filter(l => normalizeStatus(l.status) === 'qualified').reduce((sum, l) => sum + (l.value || 0), 0) / 1000).toFixed(0)}K</p>
             </div>
             <div 
               className={`text-center p-3 sm:p-4 rounded-lg border transition-all cursor-pointer ${
@@ -272,15 +272,12 @@ if (loading) {
                   ? 'bg-orange-100 border-orange-400 shadow-md' 
                   : 'bg-orange-50 border-orange-200 hover:bg-orange-100 hover:border-orange-300'
               }`}
-              onClick={(e) => {
-                e.stopPropagation();
-                setSelectedStatusFilter(selectedStatusFilter === 'negotiation' ? null : 'negotiation');
-              }}
+              onClick={() => navigate('/manager/leads?status=proposal')}
             >
               <div className="w-3 h-3 rounded-full bg-orange-500 mx-auto mb-2"></div>
               <p className="text-xl sm:text-2xl font-semibold text-slate-900">{negotiationLeads}</p>
               <p className="text-xs font-medium text-orange-700 mt-1">Negotiation</p>
-              <p className="text-xs text-slate-500 mt-1">${(leads.filter(l => l.status === 'negotiation').reduce((sum, l) => sum + (l.value || 0), 0) / 1000).toFixed(0)}K</p>
+              <p className="text-xs text-slate-500 mt-1">${(leads.filter(l => normalizeStatus(l.status) === 'proposal').reduce((sum, l) => sum + (l.value || 0), 0) / 1000).toFixed(0)}K</p>
             </div>
             <div 
               className={`text-center p-3 sm:p-4 rounded-lg border transition-all cursor-pointer ${
@@ -288,15 +285,12 @@ if (loading) {
                   ? 'bg-green-100 border-green-400 shadow-md' 
                   : 'bg-green-50 border-green-200 hover:bg-green-100 hover:border-green-300'
               }`}
-              onClick={(e) => {
-                e.stopPropagation();
-                setSelectedStatusFilter(selectedStatusFilter === 'won' ? null : 'won');
-              }}
+              onClick={() => navigate('/manager/leads?status=closed_won')}
             >
               <div className="w-3 h-3 rounded-full bg-green-500 mx-auto mb-2"></div>
               <p className="text-xl sm:text-2xl font-semibold text-slate-900">{wonLeads}</p>
               <p className="text-xs font-medium text-green-700 mt-1">Won</p>
-              <p className="text-xs text-slate-500 mt-1">${(totalRevenue / 1000).toFixed(0)}K</p>
+              <p className="text-xs text-slate-500 mt-1">${(leads.filter(l => normalizeStatus(l.status) === 'closed_won').reduce((sum, l) => sum + (l.value || 0), 0) / 1000).toFixed(0)}K</p>
             </div>
             <div 
               className={`text-center p-3 sm:p-4 rounded-lg border transition-all cursor-pointer ${
@@ -304,15 +298,12 @@ if (loading) {
                   ? 'bg-red-100 border-red-400 shadow-md' 
                   : 'bg-red-50 border-red-200 hover:bg-red-100 hover:border-red-300'
               }`}
-              onClick={(e) => {
-                e.stopPropagation();
-                setSelectedStatusFilter(selectedStatusFilter === 'lost' ? null : 'lost');
-              }}
+              onClick={() => navigate('/manager/leads?status=not_interested')}
             >
               <div className="w-3 h-3 rounded-full bg-red-500 mx-auto mb-2"></div>
               <p className="text-xl sm:text-2xl font-semibold text-slate-900">{lostLeads}</p>
               <p className="text-xs font-medium text-red-700 mt-1">Lost</p>
-              <p className="text-xs text-slate-500 mt-1">${(leads.filter(l => l.status === 'lost').reduce((sum, l) => sum + (l.value || 0), 0) / 1000).toFixed(0)}K</p>
+              <p className="text-xs text-slate-500 mt-1">${(leads.filter(l => normalizeStatus(l.status) === 'not_interested').reduce((sum, l) => sum + (l.value || 0), 0) / 1000).toFixed(0)}K</p>
             </div>
           </div>
         </Card>

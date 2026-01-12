@@ -55,7 +55,7 @@ const ManagerLeads = () => {
           setLoading(false);
           return;
         }
-        
+
         const user = await getCurrentUser();
         if (!user) {
           setLoading(false);
@@ -70,11 +70,14 @@ const ManagerLeads = () => {
         const allProjects = projectsRes.data || [];
         const users = usersRes.data || [];
         const salespeople = users.filter((u: any) => String(u.role || "").toLowerCase().includes("sales"));
-        
+
         setProjects(allProjects);
         setSalesUsers(salespeople);
-        
-        if (allProjects.length > 0) {
+
+        // If a status filter is set in the URL, set project filter to 'all' (show all projects)
+        if (searchParams.get("status")) {
+          setSelectedProject(null);
+        } else if (allProjects.length > 0) {
           setSelectedProject(allProjects[0]);
         }
       } catch (error) {
@@ -85,18 +88,26 @@ const ManagerLeads = () => {
     };
 
     fetchData();
-  }, []);
+    // Only run on mount and when searchParams changes
+  }, [searchParams]);
 
-  // Read status filter from URL params
+  // Read status filter from URL params and update filter state
   useEffect(() => {
     const statusParam = searchParams.get("status");
-    if (statusParam && ["new", "qualified", "negotiation", "won", "lost", "proposal", "closed_won", "not_interested"].includes(statusParam)) {
+    if (statusParam) {
       // Normalize old status values to new ones for consistency
-      const normalizedStatus = statusParam === "negotiation" ? "proposal" 
-        : statusParam === "won" ? "closed_won"
-        : statusParam === "lost" ? "not_interested"
-        : statusParam;
+      let normalizedStatus = statusParam;
+      if (statusParam === "negotiation") normalizedStatus = "proposal";
+      else if (statusParam === "won") normalizedStatus = "closed_won";
+      else if (statusParam === "lost") normalizedStatus = "not_interested";
+      else if (["new", "qualified", "proposal", "closed_won", "not_interested"].includes(statusParam)) {
+        normalizedStatus = statusParam;
+      } else {
+        normalizedStatus = "all";
+      }
       setStatusFilter(normalizedStatus);
+    } else {
+      setStatusFilter("all");
     }
   }, [searchParams]);
 
@@ -130,28 +141,38 @@ const ManagerLeads = () => {
   }, []);
 
   useEffect(() => {
-    if (!selectedProject) return;
-    const fetchProjectLeads = async () => {
+    const fetchLeads = async () => {
       try {
         const leadsRes = await getLeads();
         const allLeads = leadsRes.data || [];
-        const projectLeads = allLeads.filter((l: any) => l.project_id === selectedProject.id);
-        setLeads(projectLeads);
+        // If a status filter is set in the URL, show all projects' leads for that status
+        if (searchParams.get("status")) {
+          setLeads(allLeads);
+        } else if (selectedProject) {
+          const projectLeads = allLeads.filter((l: any) => l.project_id === selectedProject.id);
+          setLeads(projectLeads);
+        } else {
+          setLeads([]);
+        }
       } catch (error) {
-        console.error("Error fetching project leads:", error);
+        console.error("Error fetching leads:", error);
       }
     };
-    fetchProjectLeads();
+    fetchLeads();
 
-    // Realtime: listen for leads changes and refresh current project's leads
-    const leadSub = subscribeToLeads(async (payload: any) => {
+    // Realtime: listen for leads changes and refresh
+    const leadSub = subscribeToLeads(async () => {
       try {
-        const affected = payload?.new?.project_id || payload?.old?.project_id;
-        if (!affected || affected !== selectedProject.id) return;
         const leadsRes = await getLeads();
         const allLeads = leadsRes.data || [];
-        const projectLeads = allLeads.filter((l: any) => l.project_id === selectedProject.id);
-        setLeads(projectLeads);
+        if (searchParams.get("status")) {
+          setLeads(allLeads);
+        } else if (selectedProject) {
+          const projectLeads = allLeads.filter((l: any) => l.project_id === selectedProject.id);
+          setLeads(projectLeads);
+        } else {
+          setLeads([]);
+        }
       } catch (e) {
         console.error("Failed to refresh leads after realtime event", e);
       }
@@ -160,7 +181,7 @@ const ManagerLeads = () => {
     return () => {
       try { leadSub.unsubscribe?.(); } catch {}
     };
-  }, [selectedProject]);
+  }, [selectedProject, searchParams]);
 
   const handleCreateLead = async () => {
     setCreateMessage(null);
@@ -191,18 +212,10 @@ const ManagerLeads = () => {
         description: leadForm.description || `Created on ${new Date().toLocaleDateString()}`,
         link: leadForm.link || undefined,
       });
-      
-      console.log('Lead created:', newLead);
       setCreateMessage({ type: "success", text: "Lead created successfully." });
-      
-      // Refresh leads for the current project
+      // Always refresh all leads after add
       const leadsRes = await getLeads();
-      const allLeads = leadsRes.data || [];
-      console.log('All leads after creation:', allLeads);
-      const projectLeads = allLeads.filter((l: any) => l.project_id === selectedProject.id);
-      console.log('Project leads after creation:', projectLeads);
-      setLeads(projectLeads);
-      
+      setLeads(leadsRes.data || []);
       setTimeout(() => {
         setShowAddLeadModal(false);
         setLeadForm({ company_name: "", contact_name: "", email: "", phone: "", value: "", assigned_to: "", status: "new", description: "", link: "" });
@@ -220,9 +233,7 @@ const ManagerLeads = () => {
     try {
       await updateLead(leadId, { assigned_to: salesPersonId || null });
       const leadsRes = await getLeads();
-      const allLeads = leadsRes.data || [];
-      const projectLeads = allLeads.filter((l: any) => l.project_id === selectedProject?.id);
-      setLeads(projectLeads);
+      setLeads(leadsRes.data || []);
     } catch (error) {
       console.error('Failed to assign lead:', error);
     } finally {
@@ -235,62 +246,31 @@ const ManagerLeads = () => {
       console.error('Invalid leadId or status:', { leadId, status });
       return;
     }
-    
     // Normalize status to match database enum values
-    // Database only accepts: 'new', 'qualified', 'proposal', 'closed_won', 'not_interested'
     const normalizedStatus = normalizeStatus(status);
-    
-    // Validate that the normalized status is one of the allowed database values
     const allowedStatuses = ['new', 'qualified', 'proposal', 'closed_won', 'not_interested'];
     if (!allowedStatuses.includes(normalizedStatus)) {
       console.error('Invalid normalized status:', { original: status, normalized: normalizedStatus });
       alert(`Invalid status value: ${status}. Please try again.`);
       return;
     }
-    
     setUpdatingLeadId(leadId);
     try {
-      console.log('Updating lead status:', { 
-        leadId, 
-        originalStatus: status, 
-        normalizedStatus,
-        selectedProject: selectedProject?.id 
-      });
-      
-      // Use normalized status for database update
       const result = await updateLead(leadId, { status: normalizedStatus });
-      console.log('Update result:', result);
-      
-      // Check if there was an error in the result
       if (result.error) {
-        console.error('Update lead error:', result.error);
         alert(`Failed to update lead status: ${result.error.message || 'Unknown error'}`);
         setUpdatingLeadId(null);
         return;
       }
-      
       if (!result.data) {
-        console.error('No data returned from update');
         alert('Failed to update lead status: No data returned');
         setUpdatingLeadId(null);
         return;
       }
-      
-      console.log('Status updated successfully, refreshing leads...');
-      
-      // Refresh leads for the current project
+      // Always refresh all leads after update
       const leadsRes = await getLeads();
-      if (leadsRes.error) {
-        console.error('Error fetching leads after update:', leadsRes.error);
-        alert('Status updated but failed to refresh the list. Please refresh the page.');
-      } else {
-        const allLeads = leadsRes.data || [];
-        const projectLeads = allLeads.filter((l: any) => l.project_id === selectedProject?.id);
-        console.log('Refreshed leads:', projectLeads.length);
-        setLeads(projectLeads);
-      }
+      setLeads(leadsRes.data || []);
     } catch (error) {
-      console.error('Failed to update status:', error);
       alert(`Failed to update lead status: ${error instanceof Error ? error.message : 'Unknown error'}`);
     } finally {
       setUpdatingLeadId(null);
@@ -316,7 +296,16 @@ const ManagerLeads = () => {
   };
 
   const filteredLeads = leads.filter((lead) => {
-    const matchesStatus = statusMatches(lead.status, statusFilter);
+    // Always use normalized status for filtering to match dashboard logic
+    const normalizedLeadStatus = normalizeStatus(lead.status);
+    const normalizedStatusFilter = normalizeStatus(statusFilter);
+    // If a status filter is set (from dashboard), ignore project filter (show all projects for that status)
+    if (statusFilter !== 'all') {
+      if (normalizedLeadStatus !== normalizedStatusFilter) return false;
+    } else {
+      // If no status filter, filter by selected project
+      if (selectedProject && lead.project_id !== selectedProject.id) return false;
+    }
     const matchesAssignee =
       assigneeFilter === "all" ||
       (assigneeFilter === "unassigned" ? !lead.assigned_to : lead.assigned_to === assigneeFilter);
@@ -325,7 +314,7 @@ const ManagerLeads = () => {
       (lead.company_name || "").toLowerCase().includes(term) ||
       (lead.contact_name || "").toLowerCase().includes(term) ||
       (lead.email || "").toLowerCase().includes(term);
-    return matchesStatus && matchesAssignee && matchesSearch;
+    return matchesAssignee && matchesSearch;
   });
 
   const getStatusIcon = (status: string) => {
@@ -394,12 +383,12 @@ const ManagerLeads = () => {
     );
   }
 
-  // Count leads by status (handling both old and new status values)
-  const newLeads = leads.filter(l => l.status === 'new');
-  const qualifiedLeads = leads.filter(l => l.status === 'qualified');
-  const proposalLeads = leads.filter(l => l.status === 'proposal' || l.status === 'negotiation');
-  const closedWonLeads = leads.filter(l => l.status === 'closed_won' || l.status === 'won');
-  const totalValue = leads.reduce((sum, l) => sum + (l.value || 0), 0);
+  // Pipeline stats should match filteredLeads, using normalized status
+  const newLeads = filteredLeads.filter(l => normalizeStatus(l.status) === 'new');
+  const qualifiedLeads = filteredLeads.filter(l => normalizeStatus(l.status) === 'qualified');
+  const proposalLeads = filteredLeads.filter(l => normalizeStatus(l.status) === 'proposal');
+  const closedWonLeads = filteredLeads.filter(l => normalizeStatus(l.status) === 'closed_won');
+  const totalValue = filteredLeads.reduce((sum, l) => sum + (l.value || 0), 0);
 
   // Debug logging
   console.log('Current state:', {
@@ -409,7 +398,12 @@ const ManagerLeads = () => {
     statusFilter,
     assigneeFilter,
     searchTerm,
-    leads: leads.map(l => ({ company: l.company_name, status: l.status, project_id: l.project_id }))
+    leads: leads.map(l => ({
+      company: l.company_name,
+      status: l.status,
+      normalizedStatus: normalizeStatus(l.status),
+      project_id: l.project_id
+    }))
   });
 
   return (
@@ -422,40 +416,102 @@ const ManagerLeads = () => {
           <p className="text-sm sm:text-base text-slate-600">Manage and track all leads across projects</p>
         </div>
 
-        {/* Project Selector */}
-        {projects.length > 0 && (
-          <div className="mb-4 sm:mb-6">
-            <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-2 sm:gap-4">
-              <div className="flex-1 w-full">
-                <Label className="text-slate-700 mb-2 block text-sm sm:text-base font-medium">Active Project</Label>
-                <Select value={selectedProject?.id} onValueChange={(value) => {
-                  const project = projects.find(p => p.id === value);
-                  setSelectedProject(project || null);
-                }}>
-                  <SelectTrigger className="w-full bg-white border-slate-300 text-slate-900 hover:bg-slate-50">
-                    <SelectValue placeholder="Select a project..." />
-                  </SelectTrigger>
-                  <SelectContent className="bg-white border-slate-200">
-                    {projects.map((project) => (
-                      <SelectItem key={project.id} value={project.id} className="text-slate-900 hover:bg-slate-100 focus:bg-slate-100">
-                        {project.name}
-                      </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+
+
+        {/* Filters/Search Bar with Project Selector */}
+        <Card className="p-4 bg-white border-slate-200 shadow-sm mb-4">
+          <div className="flex flex-wrap items-center gap-3">
+            <div className="flex-none min-w-[150px] max-w-[200px]">
+              <Select
+                value={selectedProject ? selectedProject.id : "all"}
+                onValueChange={(value) => {
+                  if (value === "all") {
+                    setSelectedProject(null);
+                  } else {
+                    const project = projects.find(p => p.id === value);
+                    setSelectedProject(project || null);
+                  }
+                }}
+              >
+                <SelectTrigger className="h-9 bg-white border-slate-300 text-slate-900 hover:bg-slate-50 font-medium">
+                  <SelectValue placeholder="All Projects" />
+                </SelectTrigger>
+                <SelectContent className="bg-white border-slate-200">
+                  <SelectItem value={"all"} className="text-slate-900 hover:bg-slate-100 focus:bg-slate-100 font-medium">All Projects</SelectItem>
+                  {projects.map((project) => (
+                    <SelectItem key={project.id} value={project.id} className="text-slate-900 hover:bg-slate-100 focus:bg-slate-100 font-medium">
+                      {project.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="flex-none min-w-[150px] max-w-[200px]">
+              <Select
+                value={statusFilter}
+                onValueChange={(value) => {
+                  setStatusFilter(value);
+                  // Update the URL param for status
+                  const next = new URLSearchParams(searchParams);
+                  if (value === "all") {
+                    next.delete("status");
+                  } else {
+                    next.set("status", value);
+                  }
+                  setSearchParams(next, { replace: true });
+                }}
+              >
+                <SelectTrigger className="h-9 bg-white border-slate-300 text-slate-900 hover:bg-slate-50 font-medium">
+                  <SelectValue placeholder="Status" />
+                </SelectTrigger>
+                <SelectContent className="bg-white border-slate-200">
+                  <SelectItem value="all" className="text-slate-900 hover:bg-slate-100 focus:bg-slate-100 font-medium">All Statuses</SelectItem>
+                  <SelectItem value="new" className="text-slate-900 hover:bg-slate-100 focus:bg-slate-100 font-medium">New</SelectItem>
+                  <SelectItem value="qualified" className="text-slate-900 hover:bg-slate-100 focus:bg-slate-100 font-medium">Qualified</SelectItem>
+                  <SelectItem value="proposal" className="text-slate-900 hover:bg-slate-100 focus:bg-slate-100 font-medium">In Proposal</SelectItem>
+                  <SelectItem value="closed_won" className="text-slate-900 hover:bg-slate-100 focus:bg-slate-100 font-medium">Closed Won</SelectItem>
+                  <SelectItem value="not_interested" className="text-slate-900 hover:bg-slate-100 focus:bg-slate-100 font-medium">Not Interested</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="flex-none min-w-[150px] max-w-[200px]">
+              <Select value={assigneeFilter} onValueChange={setAssigneeFilter}>
+                <SelectTrigger className="h-9 bg-white border-slate-300 text-slate-900 hover:bg-slate-50 font-medium">
+                  <SelectValue placeholder="Assignee" />
+                </SelectTrigger>
+                <SelectContent className="bg-white border-slate-200">
+                  <SelectItem value="all" className="text-slate-900 hover:bg-slate-100 focus:bg-slate-100 font-medium">All Assignees</SelectItem>
+                  <SelectItem value="unassigned" className="text-slate-900 hover:bg-slate-100 focus:bg-slate-100 font-medium">Unassigned</SelectItem>
+                  {salesUsers.map((u: any) => (
+                    <SelectItem key={u.id} value={u.id} className="text-slate-900 hover:bg-slate-100 focus:bg-slate-100 font-medium">
+                      {u.full_name || u.email?.split("@")[0] || u.id}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="flex-1 min-w-[200px]">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+                <Input
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  placeholder="Search leads..."
+                  className="h-9 pl-9 bg-white border-slate-300 text-slate-900 placeholder:text-slate-500 focus:border-blue-500"
+                />
+              </div>
+            </div>
+            <Button 
+              onClick={() => setShowAddLeadModal(true)} 
+              disabled={!selectedProject}
+              className="bg-blue-600 hover:bg-blue-700 text-white font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+              title={!selectedProject ? "Select a project to add a lead. Switch to a specific project above." : "Add a new lead"}
+            >
+              <Plus className="w-4 h-4 mr-2" />
+              Add Lead
+            </Button>
           </div>
-          <Button 
-            onClick={() => setShowAddLeadModal(true)} 
-            disabled={!selectedProject}
-            className="bg-blue-600 hover:bg-blue-700 text-white font-medium disabled:opacity-50 disabled:cursor-not-allowed"
-            title={!selectedProject ? "Please select a project first" : "Add a new lead"}
-          >
-            <Plus className="w-4 h-4 mr-2" />
-            Add Lead
-          </Button>
-        </div>
-      </div>
-        )}
+        </Card>
 
         {projects.length === 0 && (
           <Card className="p-12 bg-white/5 border-white/10 text-center">
@@ -519,57 +575,6 @@ const ManagerLeads = () => {
               </div>
             </Card>
 
-            {/* Compact Filters Bar */}
-            <Card className="p-4 bg-white border-slate-200 shadow-sm mb-4">
-              <div className="flex flex-wrap items-center gap-3">
-                <div className="flex items-center gap-2">
-                  <Filter className="w-4 h-4 text-slate-600" />
-                  <span className="text-sm font-semibold text-slate-900">Filters:</span>
-                </div>
-                <div className="flex-1 min-w-[150px] max-w-[200px]">
-                  <Select value={statusFilter} onValueChange={setStatusFilter}>
-                    <SelectTrigger className="h-9 bg-white border-slate-300 text-slate-900 hover:bg-slate-50 font-medium">
-                      <SelectValue placeholder="Status" />
-                    </SelectTrigger>
-                    <SelectContent className="bg-white border-slate-200">
-                      <SelectItem value="all" className="text-slate-900 hover:bg-slate-100 focus:bg-slate-100 font-medium">All Statuses</SelectItem>
-                      <SelectItem value="new" className="text-slate-900 hover:bg-slate-100 focus:bg-slate-100 font-medium">New</SelectItem>
-                      <SelectItem value="qualified" className="text-slate-900 hover:bg-slate-100 focus:bg-slate-100 font-medium">Qualified</SelectItem>
-                      <SelectItem value="proposal" className="text-slate-900 hover:bg-slate-100 focus:bg-slate-100 font-medium">In Proposal</SelectItem>
-                      <SelectItem value="closed_won" className="text-slate-900 hover:bg-slate-100 focus:bg-slate-100 font-medium">Closed Won</SelectItem>
-                      <SelectItem value="not_interested" className="text-slate-900 hover:bg-slate-100 focus:bg-slate-100 font-medium">Not Interested</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="flex-1 min-w-[150px] max-w-[200px]">
-                  <Select value={assigneeFilter} onValueChange={setAssigneeFilter}>
-                    <SelectTrigger className="h-9 bg-white border-slate-300 text-slate-900 hover:bg-slate-50 font-medium">
-                      <SelectValue placeholder="Assignee" />
-                    </SelectTrigger>
-                    <SelectContent className="bg-white border-slate-200">
-                      <SelectItem value="all" className="text-slate-900 hover:bg-slate-100 focus:bg-slate-100 font-medium">All Assignees</SelectItem>
-                      <SelectItem value="unassigned" className="text-slate-900 hover:bg-slate-100 focus:bg-slate-100 font-medium">Unassigned</SelectItem>
-                      {salesUsers.map((u: any) => (
-                        <SelectItem key={u.id} value={u.id} className="text-slate-900 hover:bg-slate-100 focus:bg-slate-100 font-medium">
-                          {u.full_name || u.email?.split("@")[0] || u.id}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="flex-1 min-w-[200px]">
-                  <div className="relative">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
-                    <Input
-                      value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
-                      placeholder="Search leads..."
-                      className="h-9 pl-9 bg-white border-slate-300 text-slate-900 placeholder:text-slate-500 focus:border-blue-500"
-                    />
-                  </div>
-                </div>
-              </div>
-            </Card>
 
             {/* Leads List */}
             <Card className="p-3 sm:p-6 bg-white border-slate-200">
@@ -625,7 +630,7 @@ const ManagerLeads = () => {
                             }}
                             disabled={assigningLead === lead.id}
                           >
-                            <SelectTrigger className="bg-white border-slate-200 text-slate-900 text-xs" onClick={(e) => e.stopPropagation()}>
+                            <SelectTrigger className="bg-white border-slate-200 text-slate-900 text-xs">
                               <SelectValue placeholder="Assign to..." />
                             </SelectTrigger>
                             <SelectContent>
@@ -640,64 +645,21 @@ const ManagerLeads = () => {
                           <Select
                             value={normalizeStatus(lead.status) || lead.status}
                             onValueChange={(value) => {
-                              console.log('Status change triggered:', { 
-                                leadId: lead.id, 
-                                newStatus: value, 
-                                currentStatus: lead.status,
-                                normalizedCurrent: normalizeStatus(lead.status)
-                              });
-                              // Use the value directly (it's already normalized from the SelectItem values)
                               handleStatusChange(lead.id, value);
                             }}
                             disabled={updatingLeadId === lead.id}
                           >
                             <SelectTrigger 
-                              className="bg-white border-slate-200 text-slate-900 text-xs" 
-                              onClick={(e) => {
-                                e.stopPropagation();
-                              }}
+                              className="bg-white border-slate-200 text-slate-900 text-xs"
                             >
                               <SelectValue />
                             </SelectTrigger>
-                            <SelectContent 
-                              onClick={(e) => e.stopPropagation()}
-                              onPointerDown={(e) => e.stopPropagation()}
-                            >
-                              <SelectItem 
-                                value="new" 
-                                onPointerDown={(e) => e.stopPropagation()}
-                                onClick={(e) => e.stopPropagation()}
-                              >
-                                New
-                              </SelectItem>
-                              <SelectItem 
-                                value="qualified" 
-                                onPointerDown={(e) => e.stopPropagation()}
-                                onClick={(e) => e.stopPropagation()}
-                              >
-                                Qualified
-                              </SelectItem>
-                              <SelectItem 
-                                value="proposal" 
-                                onPointerDown={(e) => e.stopPropagation()}
-                                onClick={(e) => e.stopPropagation()}
-                              >
-                                In Proposal
-                              </SelectItem>
-                              <SelectItem 
-                                value="closed_won" 
-                                onPointerDown={(e) => e.stopPropagation()}
-                                onClick={(e) => e.stopPropagation()}
-                              >
-                                Closed Won
-                              </SelectItem>
-                              <SelectItem 
-                                value="not_interested" 
-                                onPointerDown={(e) => e.stopPropagation()}
-                                onClick={(e) => e.stopPropagation()}
-                              >
-                                Not Interested
-                              </SelectItem>
+                            <SelectContent>
+                              <SelectItem value="new">New</SelectItem>
+                              <SelectItem value="qualified">Qualified</SelectItem>
+                              <SelectItem value="proposal">In Proposal</SelectItem>
+                              <SelectItem value="closed_won">Closed Won</SelectItem>
+                              <SelectItem value="not_interested">Not Interested</SelectItem>
                             </SelectContent>
                           </Select>
                         </div>
