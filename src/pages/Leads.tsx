@@ -41,24 +41,38 @@ const Leads = () => {
   };
 
   const handleAddLead = async () => {
-    const { data, error } = await createLead(formData as any);
-    if (!error) {
-      alert("Lead added successfully!");
-      setShowAddModal(false);
-      setFormData({
-        company_name: "",
-        contact_name: "",
-        contact_email: "",
-        contact_phone: "",
-        status: "new",
-        value: 0,
-        source: "",
-        description: "",
-      });
-      // Refresh leads
-      const { data: leadsData } = await getLeads();
-      if (leadsData) setAllLeads(leadsData);
-    } else {
+    try {
+      // Dynamically import getCurrentUser to avoid circular deps if any
+      const { getCurrentUser, getUserById } = await import("@/lib/supabase");
+      const user = await getCurrentUser();
+      let leadData = { ...formData };
+      if (user) {
+        const { data: userData } = await getUserById(user.id);
+        if (userData?.role === "salesman") {
+          leadData.assigned_to = user.id;
+        }
+      }
+      const { data, error } = await createLead(leadData as any);
+      if (!error) {
+        alert("Lead added successfully!");
+        setShowAddModal(false);
+        setFormData({
+          company_name: "",
+          contact_name: "",
+          contact_email: "",
+          contact_phone: "",
+          status: "new",
+          value: 0,
+          source: "",
+          description: "",
+        });
+        // Refresh leads
+        const { data: leadsData } = await getLeads();
+        if (leadsData) setAllLeads(leadsData);
+      } else {
+        alert("Failed to add lead");
+      }
+    } catch (err) {
       alert("Failed to add lead");
     }
   };
@@ -82,19 +96,16 @@ const Leads = () => {
     setShowViewModal(true);
   };
 
-  const handleEditLead = (lead: any) => {
-    setSelectedLead(lead);
-    setFormData({
-      company_name: lead.company_name || lead.company,
-      contact_name: lead.contact_name || lead.contact,
-      contact_email: lead.contact_email || lead.email,
-      contact_phone: lead.contact_phone || lead.phone || "",
-      status: lead.status,
-      value: lead.value,
-      source: lead.source || "",
-      description: lead.description || "",
-    });
-    setShowEditModal(true);
+
+  const handleStatusChange = async (lead: any, newStatus: string) => {
+    const { error } = await updateLead(lead.id, { status: newStatus });
+    if (!error) {
+      // Refresh leads
+      const { data: leadsData } = await getLeads();
+      if (leadsData) setAllLeads(leadsData);
+    } else {
+      alert("Failed to update status");
+    }
   };
 
   const handleExport = () => {
@@ -238,9 +249,17 @@ const Leads = () => {
                       <div className="text-xs text-slate-400">{lead.email}</div>
                     </td>
                     <td className="py-3 px-4">
-                      <Badge variant="outline" className={getStatusColor(lead.status)}>
-                        {lead.status}
-                      </Badge>
+                      <select
+                        className={`bg-transparent border-none text-inherit ${getStatusColor(lead.status)} rounded px-2 py-1`}
+                        value={lead.status}
+                        onChange={e => handleStatusChange(lead, e.target.value)}
+                      >
+                        <option value="new">New</option>
+                        <option value="qualified">Qualified</option>
+                        <option value="negotiation">Negotiation</option>
+                        <option value="won">Won</option>
+                        <option value="lost">Lost</option>
+                      </select>
                     </td>
                     <td className="py-3 px-4 text-right text-sm font-semibold text-white">
                       ${(lead.value / 1000).toFixed(0)}K
@@ -259,7 +278,6 @@ const Leads = () => {
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
-                            <DropdownMenuItem onClick={() => handleEditLead(lead)}>Edit Lead</DropdownMenuItem>
                             <DropdownMenuItem onClick={() => handleViewLead(lead)}>View Details</DropdownMenuItem>
                             <DropdownMenuItem>Reassign</DropdownMenuItem>
                             <DropdownMenuItem className="text-red-600">Delete</DropdownMenuItem>
@@ -393,61 +411,7 @@ const Leads = () => {
           </DialogContent>
         </Dialog>
 
-        {/* Edit Lead Modal */}
-        <Dialog open={showEditModal} onOpenChange={setShowEditModal}>
-          <DialogContent className="bg-slate-900 border-slate-700 text-white max-w-2xl">
-            <DialogHeader>
-              <DialogTitle>Edit Lead</DialogTitle>
-            </DialogHeader>
-            <div className="space-y-4 py-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label>Company Name</Label>
-                  <Input value={formData.company_name} onChange={(e) => setFormData({...formData, company_name: e.target.value})} className="bg-slate-800 border-slate-700 text-white" />
-                </div>
-                <div>
-                  <Label>Contact Name</Label>
-                  <Input value={formData.contact_name} onChange={(e) => setFormData({...formData, contact_name: e.target.value})} className="bg-slate-800 border-slate-700 text-white" />
-                </div>
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label>Email</Label>
-                  <Input type="email" value={formData.contact_email} onChange={(e) => setFormData({...formData, contact_email: e.target.value})} className="bg-slate-800 border-slate-700 text-white" />
-                </div>
-                <div>
-                  <Label>Phone</Label>
-                  <Input value={formData.contact_phone} onChange={(e) => setFormData({...formData, contact_phone: e.target.value})} className="bg-slate-800 border-slate-700 text-white" />
-                </div>
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label>Value</Label>
-                  <Input type="number" value={formData.value} onChange={(e) => setFormData({...formData, value: parseInt(e.target.value)})} className="bg-slate-800 border-slate-700 text-white" />
-                </div>
-                <div>
-                  <Label>Status</Label>
-                  <Select value={formData.status} onValueChange={(value) => setFormData({...formData, status: value})}>
-                    <SelectTrigger className="bg-slate-800 border-slate-700 text-white">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="new">New</SelectItem>
-                      <SelectItem value="qualified">Qualified</SelectItem>
-                      <SelectItem value="negotiation">Negotiation</SelectItem>
-                      <SelectItem value="won">Won</SelectItem>
-                      <SelectItem value="lost">Lost</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-            </div>
-            <div className="flex justify-end gap-2">
-              <Button onClick={() => setShowEditModal(false)} variant="outline" className="bg-slate-800 border-slate-700 text-white hover:bg-slate-700">Cancel</Button>
-              <Button onClick={handleUpdateLead} className="bg-blue-600 hover:bg-blue-700 text-white">Save Changes</Button>
-            </div>
-          </DialogContent>
-        </Dialog>
+
       </main>
     </div>
   );

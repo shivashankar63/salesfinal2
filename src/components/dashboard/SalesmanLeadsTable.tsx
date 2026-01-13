@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Textarea } from "@/components/ui/textarea";
@@ -461,6 +461,7 @@ const SalesmanLeadsTable = () => {
                 <th className="text-left py-2 px-3 font-medium text-xs text-slate-700">Project</th>
                 <th className="text-left py-2 px-3 font-medium text-xs text-slate-700">Contact</th>
                 <th className="text-left py-2 px-3 font-medium text-xs text-slate-700">Status</th>
+                <th className="text-left py-2 px-3 font-medium text-xs text-slate-700">Update Status</th>
                 <th className="text-right py-2 px-3 font-medium text-xs text-slate-700">Value</th>
                 <th className="text-center py-2 px-3 font-medium text-xs text-slate-700">Actions</th>
               </tr>
@@ -512,6 +513,36 @@ const SalesmanLeadsTable = () => {
                       </div>
                     </td>
                     <td className="py-2 px-3">{getStatusBadge(lead.status)}</td>
+                    <td className="py-2 px-3">
+                      <select
+                        className="bg-white border border-slate-300 rounded px-2 py-1 text-xs"
+                        value={lead.status}
+                        onClick={e => e.stopPropagation()}
+                        onChange={async e => {
+                          e.stopPropagation();
+                          const { updateLead, getLeads, getCurrentUser } = await import("@/lib/supabase");
+                          const value = e.target.value;
+                          const result = await updateLead(lead.id, { status: value });
+                          if (result.error) {
+                            alert('Failed to update status: ' + (result.error.message || result.error));
+                            return;
+                          }
+                          // Refetch only this user's leads to ensure UI is in sync
+                          const user = await getCurrentUser();
+                          if (user) {
+                            const { data } = await getLeads();
+                            const userLeads = (data || []).filter((l: any) => l.assigned_to === user.id);
+                            setLeads(userLeads);
+                          }
+                        }}
+                      >
+                        <option value="new">New</option>
+                        <option value="qualified">Qualified</option>
+                        <option value="proposal">Proposal</option>
+                        <option value="closed_won">Closed Won</option>
+                        <option value="not_interested">Not Interested</option>
+                      </select>
+                    </td>
                     <td className="py-2 px-3 text-right text-xs font-semibold text-slate-900">
                       ${(lead.value / 1000).toFixed(0)}K
                     </td>
@@ -621,6 +652,9 @@ const SalesmanLeadsTable = () => {
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle>Edit Lead - {selectedLead?.company_name}</DialogTitle>
+            <DialogDescription>
+              Update the status of this lead. Select a new status and click "Update Lead" to save changes.
+            </DialogDescription>
           </DialogHeader>
           {selectedLead && (
             <div className="space-y-4">
@@ -631,7 +665,6 @@ const SalesmanLeadsTable = () => {
                   </AlertDescription>
                 </Alert>
               )}
-              
               <div>
                 <Label htmlFor="status">Status</Label>
                 <select
