@@ -334,49 +334,7 @@ const SalesmanLeadsTable = () => {
         </div>
       )}
 
-      {/* Today's Focus Section */}
-      {focusLeads.length > 0 && (
-        <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
-          <div className="flex items-center gap-2 mb-3">
-            <AlertCircle className="w-4 h-4 text-amber-700" />
-            <h3 className="text-sm font-semibold text-amber-900">Today's Focus - Needs Attention</h3>
-          </div>
-          <div className="space-y-2">
-            {focusLeads.map(lead => (
-              <div key={lead.id} className="flex items-center justify-between bg-white rounded p-2 border border-amber-100">
-                <div className="flex items-center gap-2 flex-1 min-w-0">
-                  <Avatar className="w-6 h-6 flex-shrink-0">
-                    <AvatarFallback className="bg-amber-100 text-amber-900 text-xs">
-                      {lead.company_name.substring(0, 2).toUpperCase()}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-xs font-medium text-slate-900 truncate">{lead.company_name}</p>
-                    {lead.projects?.name && (
-                      <p className="text-xs text-slate-500 truncate">{lead.projects.name}</p>
-                    )}
-                  </div>
-                </div>
-                <div className="flex items-center gap-1.5 flex-shrink-0">
-                  {lead.last_contacted_at && (
-                    <div className="flex items-center gap-1 text-xs text-amber-700">
-                      <Clock className="w-3 h-3" />
-                      {Math.floor((Date.now() - new Date(lead.last_contacted_at).getTime()) / (1000 * 60 * 60 * 24))}d
-                    </div>
-                  )}
-                  <Button
-                    size="sm"
-                    className="h-6 text-xs px-2 bg-amber-600 hover:bg-amber-700"
-                    onClick={() => handleViewDetails(lead)}
-                  >
-                    View
-                  </Button>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
+      {/* Focus leads section removed */}
 
       <div className="bg-card rounded-xl shadow-soft p-6 animate-slide-up">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
@@ -647,11 +605,15 @@ const SalesmanLeadsTable = () => {
               </div>
               <div>
                 <Label className="text-xs font-semibold text-muted-foreground">Email</Label>
-                <p className="text-sm font-medium text-foreground mt-1">{selectedLead.contact_email || "N/A"}</p>
+                <p className="text-sm font-medium text-foreground mt-1">
+                  {selectedLead.contact_email || selectedLead.email || "N/A"}
+                </p>
               </div>
               <div>
                 <Label className="text-xs font-semibold text-muted-foreground">Phone</Label>
-                <p className="text-sm font-medium text-foreground mt-1">{selectedLead.contact_phone || "N/A"}</p>
+                <p className="text-sm font-medium text-foreground mt-1">
+                  {selectedLead.contact_phone || selectedLead.phone || "N/A"}
+                </p>
               </div>
               <div>
                 <Label className="text-xs font-semibold text-muted-foreground">Status</Label>

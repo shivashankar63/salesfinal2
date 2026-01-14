@@ -105,7 +105,7 @@ const ManagerPipeline = () => {
         <div className="mb-8">
           <div className="flex items-center justify-between mb-2">
             <div>
-              <h1 className="text-3xl font-semibold text-slate-900 mb-2">Lead Pipeline</h1>
+              <h1 className="text-3xl font-semibold text-slate-900 mb-2">Leads Overview</h1>
               <p className="text-slate-600">Stage-wise breakdown with value and SLA</p>
             </div>
           </div>

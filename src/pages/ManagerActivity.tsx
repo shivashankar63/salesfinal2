@@ -2,8 +2,11 @@ import { useState, useEffect } from "react";
 import DashboardSidebar from "@/components/dashboard/DashboardSidebar";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Dialog, DialogTrigger, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogClose } from "@/components/ui/dialog";
 import { Clock, Phone, Mail, FileText, CheckCircle2, Loader } from "lucide-react";
-import { getCurrentUser, getUsers, getLeads, getActivities, subscribeToActivities } from "@/lib/supabase";
+import { getCurrentUser, getUsers, getLeads, getActivities, subscribeToActivities, getUsersByRole, getTeams, createTeam, supabase } from "@/lib/supabase";
+import { useCallback } from "react";
 
 const iconMap: Record<string, any> = {
   call: Phone,
@@ -29,10 +32,55 @@ interface ActivityWithDetails {
   user_id: string;
 }
 
+
+type Salesman = {
+  id: string;
+  full_name: string;
+  email: string;
+};
+
+type Team = {
+  id: string;
+  name: string;
+  members: string[]; // user ids
+};
+
+// Helper to fetch team members for each team
+async function fetchTeamMembers(teamId: string) {
+  const { data, error } = await supabase
+    .from('team_members')
+    .select('user_id')
+    .eq('team_id', teamId);
+  if (error) return [];
+  return (data || []).map((row: any) => row.user_id);
+}
+
 const ManagerActivity = () => {
   const [activities, setActivities] = useState<ActivityWithDetails[]>([]);
   const [loading, setLoading] = useState(true);
   const [teamMembers, setTeamMembers] = useState<Record<string, string>>({});
+  // Teams state
+  const [teams, setTeams] = useState<Team[]>([]);
+  const [salesmen, setSalesmen] = useState<Salesman[]>([]);
+  const [newTeamName, setNewTeamName] = useState("");
+  const [newTeamMembers, setNewTeamMembers] = useState<string[]>([]);
+  const [creatingTeam, setCreatingTeam] = useState(false);
+  const [successMsg, setSuccessMsg] = useState("");
+  const [errorMsg, setErrorMsg] = useState("");
+  const [modalTeam, setModalTeam] = useState<Team | null>(null);
+  const [teamLeads, setTeamLeads] = useState<Record<string, any[]>>({}); // teamId -> leads
+  const [teamLeadsLoading, setTeamLeadsLoading] = useState<Record<string, boolean>>({});
+  // Fetch leads for a team (by member ids)
+  const fetchLeadsForTeam = useCallback(async (team: Team) => {
+    setTeamLeadsLoading(prev => ({ ...prev, [team.id]: true }));
+    // Get all leads assigned to any of the team members
+    const { data, error } = await supabase
+      .from('leads')
+      .select('*')
+      .in('assigned_to', team.members);
+    setTeamLeads(prev => ({ ...prev, [team.id]: data || [] }));
+    setTeamLeadsLoading(prev => ({ ...prev, [team.id]: false }));
+  }, []);
 
   useEffect(() => {
     let cleanup: (() => void) | undefined;
@@ -45,6 +93,7 @@ const ManagerActivity = () => {
           return;
         }
 
+
         // Get all users to map IDs to names
         const { data: users } = await getUsers();
         const userMap: Record<string, string> = {};
@@ -52,6 +101,22 @@ const ManagerActivity = () => {
           userMap[u.id] = u.full_name || u.email?.split("@")[0] || u.id;
         });
         setTeamMembers(userMap);
+
+        // Get all salesmen for team assignment
+        const { data: salesmenData } = await getUsersByRole('salesman');
+        setSalesmen(salesmenData || []);
+
+
+        // Fetch teams and their members
+        const { data: teamsData } = await getTeams();
+        const teamsWithMembers: Team[] = [];
+        if (teamsData && Array.isArray(teamsData)) {
+          for (const t of teamsData) {
+            const members = await fetchTeamMembers(t.id);
+            teamsWithMembers.push({ id: t.id, name: t.name, members });
+          }
+        }
+        setTeams(teamsWithMembers);
 
         // Get all activities (manager can see team's activities)
         const { data: allActivities } = await getActivities();
@@ -132,6 +197,206 @@ const ManagerActivity = () => {
           <div className="text-slate-500 flex items-center gap-2"><Clock className="w-4 h-4" /> Live</div>
         </div>
 
+        {/* Teams Section */}
+        <Card className="mb-8 p-6 bg-white border border-slate-200 shadow-sm rounded-xl">
+          <h2 className="text-2xl font-bold mb-4 text-slate-900">Teams</h2>
+          {successMsg && <div className="mb-2 text-green-600 font-medium">{successMsg}</div>}
+          {errorMsg && <div className="mb-2 text-red-600 font-medium">{errorMsg}</div>}
+          <Dialog open={!!modalTeam} onOpenChange={open => { if (!open) setModalTeam(null); }}>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+              {teams.length === 0 ? (
+                <div className="text-slate-500">No teams yet. Create one below.</div>
+              ) : (
+                teams.map(team => (
+                  <DialogTrigger asChild key={team.id}>
+                    <div className="bg-slate-50 border border-slate-200 rounded-lg p-4 flex flex-col gap-2 cursor-pointer hover:shadow-md transition"
+                      onClick={async () => {
+                        setModalTeam(team);
+                        if (!teamLeads[team.id]) await fetchLeadsForTeam(team);
+                      }}>
+                      <div className="flex items-center gap-2 mb-2">
+                        <span className="text-lg font-semibold text-purple-700">{team.name}</span>
+                        <span className="ml-2 text-xs text-slate-500">(View overview)</span>
+                      </div>
+                      <div className="flex flex-wrap gap-2 items-center">
+                        {team.members.length === 0 ? (
+                          <span className="text-xs text-slate-400">No members</span>
+                        ) : (
+                          team.members.map(id => (
+                            <div key={id} className="flex items-center gap-1 bg-purple-100 px-2 py-1 rounded-full">
+                              <Avatar className="w-6 h-6">
+                                <AvatarFallback className="bg-purple-600 text-white text-xs">
+                                  {(teamMembers[id]?.split(" ")[0][0] || "").toUpperCase()}
+                                </AvatarFallback>
+                              </Avatar>
+                              <span className="text-xs text-purple-900 font-medium">{teamMembers[id] || id}</span>
+                            </div>
+                          ))
+                        )}
+                      </div>
+                    </div>
+                  </DialogTrigger>
+                ))
+              )}
+            </div>
+            <DialogContent>
+              {modalTeam && (
+                <div>
+                  <DialogHeader>
+                    <DialogTitle>Team: {modalTeam.name}</DialogTitle>
+                    <DialogDescription>Overview of leads and status for this team</DialogDescription>
+                  </DialogHeader>
+                  <div className="mt-4">
+                    {teamLeadsLoading[modalTeam.id] ? (
+                      <div className="text-slate-400 text-sm">Loading leads...</div>
+                    ) : (
+                      <>
+                        {/* Status summary and qualified percentage */}
+                        <div className="mb-4 flex flex-wrap gap-3 items-center">
+                          {['new','qualified','proposal','closed_won','not_interested'].map(status => {
+                            const count = teamLeads[modalTeam.id]?.filter(l => l.status === status).length || 0;
+                            return (
+                              <span key={status} className="text-xs px-2 py-1 rounded bg-slate-100 border border-slate-200 text-slate-700">
+                                {status.replace('_',' ')}: <b>{count}</b>
+                              </span>
+                            );
+                          })}
+                          {/* Qualified percentage */}
+                          {(() => {
+                            const leads = teamLeads[modalTeam.id] || [];
+                            const qualified = leads.filter(l => l.status === 'qualified').length;
+                            const pct = leads.length > 0 ? Math.round((qualified / leads.length) * 100) : 0;
+                            return (
+                              <span className="ml-4 text-xs font-bold text-green-700 bg-green-100 px-3 py-1 rounded-full border border-green-200">
+                                Qualified: {pct}%
+                              </span>
+                            );
+                          })()}
+                        </div>
+                        {/* Leads table */}
+                        {(!teamLeads[modalTeam.id] || teamLeads[modalTeam.id].length === 0) ? (
+                          <div className="text-xs text-slate-400">No leads assigned to this team.</div>
+                        ) : (
+                          <div className="overflow-x-auto">
+                            <table className="min-w-full text-xs border">
+                              <thead>
+                                <tr className="bg-slate-100">
+                                  <th className="px-2 py-1 border">Lead Name</th>
+                                  <th className="px-2 py-1 border">Status</th>
+                                  <th className="px-2 py-1 border">Assigned To</th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                                {teamLeads[modalTeam.id].map(lead => (
+                                  <tr key={lead.id} className="border-b">
+                                    <td className="px-2 py-1 border">{lead.company_name || lead.contact_name || lead.email || lead.id}</td>
+                                    <td className="px-2 py-1 border capitalize">{lead.status?.replace('_',' ')}</td>
+                                    <td className="px-2 py-1 border">{teamMembers[lead.assigned_to] || lead.assigned_to}</td>
+                                  </tr>
+                                ))}
+                              </tbody>
+                            </table>
+                          </div>
+                        )}
+                      </>
+                    )}
+                  </div>
+                </div>
+              )}
+            </DialogContent>
+          </Dialog>
+          <hr className="my-6 border-slate-200" />
+          <form
+            className="flex flex-col gap-4 md:flex-row md:items-end"
+            onSubmit={async e => {
+              e.preventDefault();
+              setSuccessMsg("");
+              setErrorMsg("");
+              setCreatingTeam(true);
+              try {
+                // Create team in Supabase
+                const currentUser = await getCurrentUser();
+                const { data: created, error } = await createTeam({
+                  name: newTeamName,
+                  created_by: currentUser.id,
+                });
+                if (error || !created || !created[0]) {
+                  setErrorMsg('Failed to create team. ' + (error?.message || error || 'Unknown error'));
+                  setCreatingTeam(false);
+                  return;
+                }
+                const teamId = created[0].id;
+                // Add members to team_members
+                for (const userId of newTeamMembers) {
+                  const { error: memberError } = await supabase.from('team_members').insert({ team_id: teamId, user_id: userId });
+                  if (memberError) {
+                    setErrorMsg('Failed to add member: ' + (memberError?.message || memberError));
+                  }
+                }
+                // Refresh teams
+                const { data: teamsData } = await getTeams();
+                const teamsWithMembers: Team[] = [];
+                if (teamsData && Array.isArray(teamsData)) {
+                  for (const t of teamsData) {
+                    const members = await fetchTeamMembers(t.id);
+                    teamsWithMembers.push({ id: t.id, name: t.name, members });
+                  }
+                }
+                setTeams(teamsWithMembers);
+                setNewTeamName("");
+                setNewTeamMembers([]);
+                setSuccessMsg("Team created successfully!");
+              } catch (err) {
+                setErrorMsg('Failed to create team. ' + (err?.message || err || 'Unknown error'));
+              }
+              setCreatingTeam(false);
+            }}
+          >
+            <div className="flex flex-col gap-1">
+              <label className="block text-xs text-slate-600 mb-1">Team Name</label>
+              <input
+                className="border border-slate-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-400"
+                value={newTeamName}
+                onChange={e => setNewTeamName(e.target.value)}
+                required
+                placeholder="Enter team name"
+              />
+            </div>
+            <div className="flex flex-col gap-1">
+              <label className="block text-xs text-slate-600 mb-1">Assign Salespeople</label>
+              <div className="flex flex-wrap gap-2">
+                {salesmen.map(s => (
+                  <label key={s.id} className="flex items-center gap-2 text-xs bg-slate-100 px-2 py-1 rounded-full cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={newTeamMembers.includes(s.id)}
+                      onChange={e => {
+                        setNewTeamMembers(prev =>
+                          e.target.checked ? [...prev, s.id] : prev.filter(id => id !== s.id)
+                        );
+                      }}
+                    />
+                    <Avatar className="w-5 h-5">
+                      <AvatarFallback className="bg-purple-600 text-white text-xs">
+                        {(s.full_name?.split(" ")[0][0] || "").toUpperCase()}
+                      </AvatarFallback>
+                    </Avatar>
+                    {s.full_name}
+                  </label>
+                ))}
+              </div>
+            </div>
+            <button
+              type="submit"
+              className="bg-purple-600 text-white px-6 py-2 rounded shadow hover:bg-purple-700 transition"
+              disabled={creatingTeam || !newTeamName || newTeamMembers.length === 0}
+            >
+              {creatingTeam ? <span className="animate-pulse">Creating...</span> : "Create Team"}
+            </button>
+          </form>
+        </Card>
+
+        {/* Activity Log Section */}
         <Card className="p-4 bg-white/5 border-white/10">
           {loading ? (
             <div className="flex items-center justify-center py-12">

@@ -220,7 +220,7 @@ if (loading) {
         <Card className="p-4 sm:p-6 bg-white border-slate-200 shadow-sm mb-8">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-0 mb-4 sm:mb-6">
             <div>
-              <h2 className="text-lg font-semibold text-slate-900">Lead Pipeline</h2>
+              <h2 className="text-lg font-semibold text-slate-900">Leads Overview</h2>
               <p className="text-sm text-slate-600 mt-1">Track your deals through each stage</p>
             </div>
             <div className="text-left sm:text-right">
@@ -424,81 +424,40 @@ if (loading) {
           </Card>
         </div>
 
-        {/* Recent Leads */}
+        {/* Recent Leads Table - clearer display */}
         <Card className="p-4 sm:p-6 bg-white border-slate-200 shadow-sm">
-            <div className="mb-4 sm:mb-6 flex items-center justify-between">
-              <div>
-                <h2 className="text-lg font-semibold text-slate-900">
-                  {selectedStatusFilter ? `${selectedStatusFilter.charAt(0).toUpperCase() + selectedStatusFilter.slice(1)} Leads` : 'Recent Leads'}
-                </h2>
-                <p className="text-sm text-slate-600 mt-1">
-                  {selectedStatusFilter 
-                    ? `Showing all ${selectedStatusFilter} leads from your pipeline`
-                    : 'Latest updates from your pipeline'}
-                </p>
-              </div>
-              {selectedStatusFilter && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setSelectedStatusFilter(null)}
-                  className="text-xs"
-                >
-                  Clear Filter
-                </Button>
-              )}
+          <div className="mb-4 flex items-center justify-between">
+            <h2 className="text-lg font-semibold text-slate-900">Recent Leads</h2>
           </div>
-            {(() => {
-              const filteredLeads = selectedStatusFilter 
-                ? leads.filter(l => l.status === selectedStatusFilter)
-                : leads.slice(0, 5);
-              
-              return filteredLeads.length > 0 ? (
-            <div className="space-y-2">
-              {filteredLeads.map((lead) => (
-                <div 
-                  key={lead.id} 
-                  className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 p-3 sm:p-4 rounded-lg border border-slate-200 hover:border-slate-300 hover:shadow-sm transition-all cursor-pointer group"
-                >
-                  <div className="flex-1">
-                    <h3 className="font-medium text-slate-900 group-hover:text-slate-700 mb-1">
-                      {lead.company_name}
-                    </h3>
-                    <p className="text-sm text-slate-600">{lead.contact_name}</p>
-                  </div>
-                  <div className="flex items-center justify-between gap-3 sm:gap-4">
-                    <Badge className={
-                      lead.status === 'won' ? 'bg-green-50 text-green-700 border-green-200 hover:bg-green-50' :
-                      lead.status === 'lost' ? 'bg-red-50 text-red-700 border-red-200 hover:bg-red-50' :
-                      lead.status === 'negotiation' ? 'bg-orange-50 text-orange-700 border-orange-200 hover:bg-orange-50' :
-                      lead.status === 'qualified' ? 'bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-50' :
-                      'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-50'
-                    }>
-                      {lead.status}
-                    </Badge>
-                    <span className="text-base font-semibold text-slate-900 min-w-[80px] text-right">
-                      ${((lead.value || 0) / 1000).toFixed(0)}K
-                    </span>
-                  </div>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div className="text-center py-12">
-              <div className="w-16 h-16 rounded-full bg-slate-100 flex items-center justify-center mx-auto mb-4">
-                <Target className="w-8 h-8 text-slate-400" />
-              </div>
-              <p className="text-slate-900 font-medium mb-1">
-                {selectedStatusFilter ? `No ${selectedStatusFilter} leads` : 'No leads yet'}
-              </p>
-              <p className="text-sm text-slate-600">
-                {selectedStatusFilter 
-                  ? 'Try selecting a different status or clear the filter'
-                  : 'Start adding leads to track your pipeline'}
-              </p>
-            </div>
-          );
-            })()}
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead>
+                <tr className="border-b border-slate-200">
+                  <th className="text-left py-2 px-3 text-xs font-semibold text-slate-500">Company</th>
+                  <th className="text-left py-2 px-3 text-xs font-semibold text-slate-500">Contact</th>
+                  <th className="text-left py-2 px-3 text-xs font-semibold text-slate-500">Status</th>
+                  <th className="text-right py-2 px-3 text-xs font-semibold text-slate-500">Value</th>
+                </tr>
+              </thead>
+              <tbody>
+                {leads.slice(0, 5).map((lead) => (
+                  <tr key={lead.id} className="border-b border-slate-100 hover:bg-slate-50">
+                    <td className="py-2 px-3 text-sm text-slate-900">{lead.company_name}</td>
+                    <td className="py-2 px-3 text-sm text-slate-700">{lead.contact_name}</td>
+                    <td className="py-2 px-3">
+                      <Badge className="capitalize border px-2 py-1 text-xs" variant="outline">{lead.status.replace('_', ' ')}</Badge>
+                    </td>
+                    <td className="py-2 px-3 text-right text-sm font-semibold text-slate-900">${((lead.value || 0) / 1000).toFixed(0)}K</td>
+                  </tr>
+                ))}
+                {leads.length === 0 && (
+                  <tr>
+                    <td colSpan={4} className="py-8 text-center text-slate-400">No leads found</td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
         </Card>
 
 

@@ -3,8 +3,8 @@ import { useNavigate } from "react-router-dom";
 import { Loader } from "lucide-react";
 import DashboardSidebar from "@/components/dashboard/DashboardSidebar";
 import SalesmanLeadsTable from "@/components/dashboard/SalesmanLeadsTable";
-import ActivityTimeline from "@/components/dashboard/ActivityTimeline";
-import QuotaProgress from "@/components/dashboard/QuotaProgress";
+// import ActivityTimeline from "@/components/dashboard/ActivityTimeline";
+// import QuotaProgress from "@/components/dashboard/QuotaProgress";
 import { getCurrentUser, getUserById } from "@/lib/supabase";
 
 const SalesmanDashboard = () => {
@@ -65,8 +65,8 @@ const SalesmanDashboard = () => {
             </div>
             
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-              <QuotaProgress />
-              <ActivityTimeline />
+              {/* <QuotaProgress /> */}
+              {/* <ActivityTimeline /> */}
             </div>
           </>
         )}
