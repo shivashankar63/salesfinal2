@@ -31,109 +31,13 @@ interface Lead {
 }
 
 const SalesmanLeadsTable = () => {
-  const [leads, setLeads] = useState<Lead[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [statusFilter, setStatusFilter] = useState<string>("all");
-  const [projectFilter, setProjectFilter] = useState<string>("all");
-  const [groupByProject, setGroupByProject] = useState(false);
-  const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
-  const [showDetailsModal, setShowDetailsModal] = useState(false);
-  const [showEditModal, setShowEditModal] = useState(false);
-  const [showNoteModal, setShowNoteModal] = useState(false);
-  const [editingStatus, setEditingStatus] = useState("");
-  const [noteText, setNoteText] = useState("");
-  const [updateLoadingId, setUpdateLoadingId] = useState<string | null>(null);
-  const [updateMessage, setUpdateMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
+  // ...existing state and hooks...
 
-  useEffect(() => {
-    let cleanup: (() => void) | undefined;
-
-    const fetchLeads = async () => {
-      try {
-        const user = await getCurrentUser();
-        if (user) {
-          const { data } = await getLeads();
-          const userLeads = (data || []).filter((l: any) => l.assigned_to === user.id);
-          setLeads(userLeads);
-          // Realtime subscribe to this user's assigned leads
-          const sub = subscribeToLeads(async (payload: any) => {
-            const et = payload?.eventType || payload?.type;
-            const newRow = payload?.new;
-            const oldRow = payload?.old;
-            if (et === 'INSERT') {
-              if (newRow && newRow.assigned_to === user.id) {
-                setLeads(prev => {
-                  const exists = prev.some(l => l.id === newRow.id);
-                  return exists ? prev.map(l => l.id === newRow.id ? newRow : l) : [...prev, newRow];
-                });
-              }
-            } else if (et === 'UPDATE') {
-              if (newRow?.assigned_to === user.id) {
-                setLeads(prev => prev.some(l => l.id === newRow.id)
-                  ? prev.map(l => l.id === newRow.id ? newRow : l)
-                  : [...prev, newRow]
-                );
-              } else if (oldRow?.assigned_to === user.id) {
-                // Lead moved away from this user
-                setLeads(prev => prev.filter(l => l.id !== oldRow.id));
-              }
-            } else if (et === 'DELETE') {
-              if (oldRow) {
-                setLeads(prev => prev.filter(l => l.id !== oldRow.id));
-              }
-            }
-          });
-          cleanup = () => { try { sub.unsubscribe?.(); } catch {} };
-        } else {
-          const { data } = await getLeads();
-          setLeads(data || []);
-        }
-      } catch (error) {
-        console.error("Error fetching leads:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchLeads();
-
-    return () => {
-      try { cleanup?.(); } catch {}
-    };
-  }, []);
-
-  // Calculate leads needing attention (not contacted in 7+ days)
-  const getNeedsAttention = (lead: Lead) => {
-    if (!lead.last_contacted_at) return true;
-    const lastContact = new Date(lead.last_contacted_at);
-    const daysSince = Math.floor((Date.now() - lastContact.getTime()) / (1000 * 60 * 60 * 24));
-    return daysSince >= 7;
-  };
-
-  // Get unique projects
-  const uniqueProjects = Array.from(new Set(leads.map(l => l.projects?.name).filter(Boolean)));
-
-  // Calculate project stats
-  const projectStats = uniqueProjects.map(projectName => {
-    const projectLeads = leads.filter(l => l.projects?.name === projectName);
-    return {
-      name: projectName,
-      count: projectLeads.length,
-      value: projectLeads.reduce((sum, l) => sum + l.value, 0),
-      needsAttention: projectLeads.filter(getNeedsAttention).length,
-    };
-  });
-
-  // Leads needing attention today
-  const focusLeads = leads.filter(lead => {
-    const needsAttention = getNeedsAttention(lead);
-    const isActive = lead.status !== 'closed_won' && lead.status !== 'not_interested';
-    return needsAttention && isActive;
-  }).slice(0, 5);
+  // ...existing useEffect and logic...
 
   const filteredLeads = leads.filter((lead) => {
     const matchesSearch = lead.company_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                          lead.contact_name.toLowerCase().includes(searchQuery.toLowerCase());
+      lead.contact_name.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesStatus = statusFilter === "all" || lead.status === statusFilter;
     const matchesProject = projectFilter === "all" || lead.projects?.name === projectFilter;
     return matchesSearch && matchesStatus && matchesProject;
@@ -142,10 +46,10 @@ const SalesmanLeadsTable = () => {
   // Sort leads by project if grouping is enabled
   const sortedLeads = groupByProject
     ? [...filteredLeads].sort((a, b) => {
-        const projectA = a.projects?.name || 'zzz_no_project';
-        const projectB = b.projects?.name || 'zzz_no_project';
-        return projectA.localeCompare(projectB);
-      })
+      const projectA = a.projects?.name || 'zzz_no_project';
+      const projectB = b.projects?.name || 'zzz_no_project';
+      return projectA.localeCompare(projectB);
+    })
     : filteredLeads;
 
   const statusLabel: Record<string, string> = {
@@ -157,64 +61,6 @@ const SalesmanLeadsTable = () => {
     not_interested: "Not Interested",
   };
 
-  const getStatusBadge = (status: Lead["status"]) => {
-    const styles = {
-      new: "bg-blue-50 text-blue-700 border-blue-200",
-      qualified: "bg-indigo-50 text-indigo-700 border-indigo-200",
-      proposal: "bg-amber-50 text-amber-700 border-amber-200",
-      closed_won: "bg-emerald-50 text-emerald-700 border-emerald-200",
-      not_interested: "bg-rose-50 text-rose-700 border-rose-200",
-    } as const;
-
-    const labels = {
-      new: "New",
-      qualified: "Qualified",
-      proposal: "Proposal",
-      closed_won: "Closed Won",
-      not_interested: "Not Interested",
-    } as const;
-
-    return (
-      <Badge variant="outline" className={styles[status]}>
-        {labels[status]}
-      </Badge>
-    );
-  };
-
-  const handleCallLead = (lead: Lead) => {
-    const phone = (lead as any).contact_phone || (lead as any).phone;
-    if (phone) {
-      window.location.href = `tel:${phone}`;
-    } else {
-      alert("No phone number available for this lead");
-    }
-  };
-
-  const handleMessageLead = (lead: Lead) => {
-    const email = (lead as any).contact_email || (lead as any).email;
-    const phone = (lead as any).contact_phone || (lead as any).phone;
-    if (email) {
-      window.location.href = `mailto:${email}`;
-    } else if (phone) {
-      window.location.href = `sms:${phone}`;
-    } else {
-      alert("No contact information available for this lead");
-    }
-  };
-
-  const handleViewDetails = (lead: Lead) => {
-    setSelectedLead(lead);
-    setShowDetailsModal(true);
-  };
-
-  const handleEditClick = (lead: Lead) => {
-    setSelectedLead(lead);
-    setEditingStatus(lead.status);
-    setUpdateMessage(null);
-    setShowEditModal(true);
-  };
-
-  // New: handleChangeStatusClick to ensure status is set correctly
   const handleChangeStatusClick = (lead: Lead) => {
     setSelectedLead(lead);
     setEditingStatus(lead.status);

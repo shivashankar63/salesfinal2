@@ -113,18 +113,17 @@ if (loading) {
   return (
     <div className="flex min-h-screen bg-slate-50">
       <DashboardSidebar role="manager" />
-      
-      <main className="flex-1 p-3 sm:p-4 lg:p-8 pt-20 sm:pt-16 lg:pt-8 overflow-auto bg-slate-50">
+      <main className="flex-1 p-2 sm:p-4 lg:p-8 pt-16 sm:pt-16 lg:pt-8 overflow-auto bg-slate-50">
         {/* Header */}
-        <div className="mb-6 sm:mb-8">
-          <h1 className="text-2xl sm:text-3xl font-semibold text-slate-900 mb-1">Dashboard</h1>
+        <div className="mb-4 sm:mb-8">
+          <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 mb-1">Dashboard</h1>
           <p className="text-sm sm:text-base text-slate-600">Welcome back! Here's what's happening today.</p>
         </div>
 
         {/* Key Metrics - Clean Cards (now clickable) */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-4 mb-6 sm:mb-8">
           <Card
-            className="p-4 sm:p-6 bg-white border-slate-200 shadow-sm hover:shadow-md transition-shadow cursor-pointer"
+            className="p-3 sm:p-6 bg-white border-slate-100 shadow-md hover:shadow-lg transition-shadow cursor-pointer rounded-2xl"
             onClick={(e) => {
               e.stopPropagation();
               navigate("/manager/sales-performance");
@@ -132,22 +131,22 @@ if (loading) {
           >
             <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between pointer-events-none gap-2">
               <div>
-                <p className="text-sm font-medium text-slate-600 mb-1">Total Revenue</p>
-                <p className="text-2xl sm:text-3xl font-semibold text-slate-900">${(totalRevenue / 1000).toFixed(0)}K</p>
+                <p className="text-xs sm:text-sm font-medium text-slate-600 mb-1">Total Revenue</p>
+                <p className="text-xl sm:text-3xl font-bold text-slate-900">${(totalRevenue / 1000).toFixed(0)}K</p>
                 <div className="flex items-center gap-1 mt-2">
                   <ArrowUpRight className="w-4 h-4 text-green-600" />
-                  <span className="text-sm font-medium text-green-600">12.5%</span>
-                  <span className="text-sm text-slate-500">vs last month</span>
+                  <span className="text-xs sm:text-sm font-medium text-green-600">12.5%</span>
+                  <span className="text-xs sm:text-sm text-slate-500">vs last month</span>
                 </div>
               </div>
-              <div className="w-12 h-12 rounded-xl bg-green-50 flex items-center justify-center">
+              <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-green-50 flex items-center justify-center">
                 <DollarSign className="w-6 h-6 text-green-600" />
               </div>
             </div>
           </Card>
 
           <Card
-            className="p-4 sm:p-6 bg-white border-slate-200 shadow-sm hover:shadow-md transition-shadow cursor-pointer"
+            className="p-3 sm:p-6 bg-white border-slate-100 shadow-md hover:shadow-lg transition-shadow cursor-pointer rounded-2xl"
             onClick={(e) => {
               e.stopPropagation();
               navigate("/manager/leads");
@@ -155,22 +154,22 @@ if (loading) {
           >
             <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between pointer-events-none gap-2">
               <div>
-                <p className="text-sm font-medium text-slate-600 mb-1">Active Leads</p>
-                <p className="text-2xl sm:text-3xl font-semibold text-slate-900">{totalLeads}</p>
+                <p className="text-xs sm:text-sm font-medium text-slate-600 mb-1">Active Leads</p>
+                <p className="text-xl sm:text-3xl font-bold text-slate-900">{totalLeads}</p>
                 <div className="flex items-center gap-1 mt-2">
                   <ArrowUpRight className="w-4 h-4 text-blue-600" />
-                  <span className="text-sm font-medium text-blue-600">8.2%</span>
-                  <span className="text-sm text-slate-500">vs last month</span>
+                  <span className="text-xs sm:text-sm font-medium text-blue-600">8.2%</span>
+                  <span className="text-xs sm:text-sm text-slate-500">vs last month</span>
                 </div>
               </div>
-              <div className="w-12 h-12 rounded-xl bg-blue-50 flex items-center justify-center">
+              <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-blue-50 flex items-center justify-center">
                 <Target className="w-6 h-6 text-blue-600" />
               </div>
             </div>
           </Card>
 
           <Card
-            className="p-4 sm:p-6 bg-white border-slate-200 shadow-sm hover:shadow-md transition-shadow cursor-pointer"
+            className="p-3 sm:p-6 bg-white border-slate-100 shadow-md hover:shadow-lg transition-shadow cursor-pointer rounded-2xl"
             onClick={(e) => {
               e.stopPropagation();
               navigate("/manager/performance");
@@ -178,22 +177,22 @@ if (loading) {
           >
             <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between pointer-events-none gap-2">
               <div>
-                <p className="text-sm font-medium text-slate-600 mb-1">Win Rate</p>
-                <p className="text-2xl sm:text-3xl font-semibold text-slate-900">{winRate}%</p>
+                <p className="text-xs sm:text-sm font-medium text-slate-600 mb-1">Win Rate</p>
+                <p className="text-xl sm:text-3xl font-bold text-slate-900">{winRate}%</p>
                 <div className="flex items-center gap-1 mt-2">
                   <ArrowUpRight className="w-4 h-4 text-purple-600" />
-                  <span className="text-sm font-medium text-purple-600">4.3%</span>
-                  <span className="text-sm text-slate-500">vs last month</span>
+                  <span className="text-xs sm:text-sm font-medium text-purple-600">4.3%</span>
+                  <span className="text-xs sm:text-sm text-slate-500">vs last month</span>
                 </div>
               </div>
-              <div className="w-12 h-12 rounded-xl bg-purple-50 flex items-center justify-center">
+              <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-purple-50 flex items-center justify-center">
                 <TrendingUp className="w-6 h-6 text-purple-600" />
               </div>
             </div>
           </Card>
 
           <Card
-            className="p-4 sm:p-6 bg-white border-slate-200 shadow-sm hover:shadow-md transition-shadow cursor-pointer"
+            className="p-3 sm:p-6 bg-white border-slate-100 shadow-md hover:shadow-lg transition-shadow cursor-pointer rounded-2xl"
             onClick={(e) => {
               e.stopPropagation();
               navigate("/manager/projects");
@@ -201,15 +200,15 @@ if (loading) {
           >
             <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between pointer-events-none gap-2">
               <div>
-                <p className="text-sm font-medium text-slate-600 mb-1">Active Projects</p>
-                <p className="text-2xl sm:text-3xl font-semibold text-slate-900">{projects.length}</p>
+                <p className="text-xs sm:text-sm font-medium text-slate-600 mb-1">Active Projects</p>
+                <p className="text-xl sm:text-3xl font-bold text-slate-900">{projects.length}</p>
                 <div className="flex items-center gap-1 mt-2">
                   <Activity className="w-4 h-4 text-orange-600" />
-                  <span className="text-sm font-medium text-orange-600">{projects.filter(p => p.status === 'active').length}</span>
-                  <span className="text-sm text-slate-500">in progress</span>
+                  <span className="text-xs sm:text-sm font-medium text-orange-600">{projects.filter(p => p.status === 'active').length}</span>
+                  <span className="text-xs sm:text-sm text-slate-500">in progress</span>
                 </div>
               </div>
-              <div className="w-12 h-12 rounded-xl bg-orange-50 flex items-center justify-center">
+              <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-orange-50 flex items-center justify-center">
                 <Briefcase className="w-6 h-6 text-orange-600" />
               </div>
             </div>

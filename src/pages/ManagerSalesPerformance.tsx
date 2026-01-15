@@ -200,63 +200,58 @@ const ManagerSalesPerformance = () => {
               <p className="text-slate-600 font-medium">No salespeople assigned yet.</p>
             </div>
           ) : (
-            <div className="space-y-4">
+            <div className="flex flex-col gap-4">
               {salesTeam.map((salesman) => (
                 <div
                   key={salesman.id}
-                  className="bg-white p-5 rounded-xl border border-slate-200 hover:border-slate-300 hover:shadow-md transition-all cursor-pointer"
+                  className="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm hover:shadow-lg transition-all cursor-pointer flex flex-col gap-3 sm:gap-0"
                   onClick={() => {
                     setSelectedSalesman(salesman);
                     setShowDetailsModal(true);
                   }}
                 >
-                  <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-4">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-3 mb-2">
-                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-bold text-sm">
-                          {salesman.name.charAt(0).toUpperCase()}
-                        </div>
-                        <div>
-                          <h3 className="text-slate-900 font-semibold text-lg">{salesman.name}</h3>
-                          <p className="text-xs text-slate-500 truncate">{salesman.email}</p>
-                        </div>
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-6">
+                    <div className="flex items-center gap-3">
+                      <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-bold text-lg">
+                        {salesman.name.charAt(0).toUpperCase()}
+                      </div>
+                      <div>
+                        <h3 className="text-slate-900 font-semibold text-base sm:text-lg leading-tight">{salesman.name}</h3>
+                        <p className="text-xs text-slate-500 truncate max-w-[120px] sm:max-w-none">{salesman.email}</p>
                       </div>
                     </div>
-
-                    <div className="text-right sm:self-start">
-                      <div className={`text-2xl font-bold ${getAchievementColor(salesman.achievement)}`}>
-                        {salesman.achievement}%
-                      </div>
+                    <div className="flex flex-row items-center gap-2 sm:flex-col sm:items-end">
+                      <div className={`text-xl sm:text-2xl font-bold ${getAchievementColor(salesman.achievement)}`}>{salesman.achievement}%</div>
                       <p className="text-xs text-slate-500 font-medium">of quota</p>
                     </div>
                   </div>
 
                   {/* Performance Metrics */}
-                  <div className="grid grid-cols-3 sm:grid-cols-5 gap-3">
-                    <div className="bg-slate-50 p-3 rounded-lg border border-slate-200">
-                      <p className="text-xs text-slate-600 mb-1 font-medium">Revenue</p>
+                  <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 sm:gap-3 mt-2">
+                    <div className="bg-slate-50 p-2 sm:p-3 rounded-lg border border-slate-200 flex flex-col items-center">
+                      <p className="text-[11px] sm:text-xs text-slate-600 mb-1 font-medium">Revenue</p>
                       <p className="font-bold text-green-600 text-sm">${(salesman.revenue / 1000).toFixed(0)}K</p>
                     </div>
-                    <div className="bg-slate-50 p-3 rounded-lg border border-slate-200">
-                      <p className="text-xs text-slate-600 mb-1 font-medium">Quota</p>
+                    <div className="bg-slate-50 p-2 sm:p-3 rounded-lg border border-slate-200 flex flex-col items-center">
+                      <p className="text-[11px] sm:text-xs text-slate-600 mb-1 font-medium">Quota</p>
                       <p className="font-bold text-slate-900 text-sm">${(salesman.quota / 1000).toFixed(0)}K</p>
                     </div>
-                    <div className="bg-slate-50 p-3 rounded-lg border border-slate-200">
-                      <p className="text-xs text-slate-600 mb-1 font-medium">Closed Won</p>
+                    <div className="bg-slate-50 p-2 sm:p-3 rounded-lg border border-slate-200 flex flex-col items-center">
+                      <p className="text-[11px] sm:text-xs text-slate-600 mb-1 font-medium">Closed Won</p>
                       <p className="font-bold text-slate-900 text-sm">{salesman.leads.closed_won}</p>
                     </div>
-                    <div className="bg-slate-50 p-3 rounded-lg border border-slate-200 hidden sm:block">
-                      <p className="text-xs text-slate-600 mb-1 font-medium">Win Rate</p>
+                    <div className="bg-slate-50 p-2 sm:p-3 rounded-lg border border-slate-200 flex flex-col items-center hidden sm:flex">
+                      <p className="text-[11px] sm:text-xs text-slate-600 mb-1 font-medium">Win Rate</p>
                       <p className="font-bold text-orange-600 text-sm">{salesman.winRate}%</p>
                     </div>
-                    <div className="bg-slate-50 p-3 rounded-lg border border-slate-200 hidden sm:block">
-                      <p className="text-xs text-slate-600 mb-1 font-medium">Avg Deal</p>
+                    <div className="bg-slate-50 p-2 sm:p-3 rounded-lg border border-slate-200 flex flex-col items-center hidden sm:flex">
+                      <p className="text-[11px] sm:text-xs text-slate-600 mb-1 font-medium">Avg Deal</p>
                       <p className="font-bold text-slate-900 text-sm">${(salesman.avgDealValue / 1000).toFixed(0)}K</p>
                     </div>
                   </div>
 
                   {/* Progress Bar */}
-                  <div className="mt-4">
+                  <div className="mt-2 sm:mt-4">
                     <div className="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
                       <div
                         className={`h-full rounded-full transition-all ${
@@ -274,7 +269,7 @@ const ManagerSalesPerformance = () => {
                   </div>
 
                   {/* Lead Pipeline */}
-                  <div className="mt-4 flex gap-2 flex-wrap">
+                  <div className="mt-2 sm:mt-4 flex gap-2 flex-wrap">
                     {salesman.leads.new > 0 && (
                       <Badge className="bg-slate-100 text-slate-700 border-slate-200">New: {salesman.leads.new}</Badge>
                     )}
@@ -323,18 +318,18 @@ const ManagerSalesPerformance = () => {
                     <span className="w-2 h-2 bg-green-500 rounded-full"></span>
                     Revenue Overview
                   </h4>
-                  <div className="grid grid-cols-3 gap-4">
-                    <div className="bg-gradient-to-br from-green-50 to-emerald-50 p-4 rounded-lg border border-green-200">
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-4">
+                    <div className="bg-gradient-to-br from-green-50 to-emerald-50 p-3 sm:p-4 rounded-lg border border-green-200">
                       <span className="text-xs font-semibold text-green-700 block mb-2 uppercase tracking-wide">💰 Total Revenue</span>
-                      <span className="text-xl font-bold text-green-600">${(selectedSalesman.revenue / 1000).toFixed(0)}K</span>
+                      <span className="text-lg sm:text-xl font-bold text-green-600">${(selectedSalesman.revenue / 1000).toFixed(0)}K</span>
                     </div>
-                    <div className="bg-gradient-to-br from-blue-50 to-cyan-50 p-4 rounded-lg border border-blue-200">
+                    <div className="bg-gradient-to-br from-blue-50 to-cyan-50 p-3 sm:p-4 rounded-lg border border-blue-200">
                       <span className="text-xs font-semibold text-blue-700 block mb-2 uppercase tracking-wide">📊 Quota</span>
-                      <span className="text-xl font-bold text-blue-600">${(selectedSalesman.quota / 1000).toFixed(0)}K</span>
+                      <span className="text-lg sm:text-xl font-bold text-blue-600">${(selectedSalesman.quota / 1000).toFixed(0)}K</span>
                     </div>
-                    <div className="bg-gradient-to-br from-purple-50 to-pink-50 p-4 rounded-lg border border-purple-200">
+                    <div className="bg-gradient-to-br from-purple-50 to-pink-50 p-3 sm:p-4 rounded-lg border border-purple-200">
                       <span className="text-xs font-semibold text-purple-700 block mb-2 uppercase tracking-wide">💎 Avg Deal Value</span>
-                      <span className="text-xl font-bold text-purple-600">${(selectedSalesman.avgDealValue / 1000).toFixed(0)}K</span>
+                      <span className="text-lg sm:text-xl font-bold text-purple-600">${(selectedSalesman.avgDealValue / 1000).toFixed(0)}K</span>
                     </div>
                   </div>
                 </div>
@@ -345,25 +340,25 @@ const ManagerSalesPerformance = () => {
                     <span className="w-2 h-2 bg-purple-500 rounded-full"></span>
                     Deal Pipeline
                   </h4>
-                  <div className="grid grid-cols-5 gap-3">
-                    <div className="bg-slate-50 p-4 rounded-lg border border-slate-200 text-center">
-                      <p className="text-2xl font-bold text-slate-900">{selectedSalesman.leads.total}</p>
+                  <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 sm:gap-3">
+                    <div className="bg-slate-50 p-3 sm:p-4 rounded-lg border border-slate-200 text-center">
+                      <p className="text-lg sm:text-2xl font-bold text-slate-900">{selectedSalesman.leads.total}</p>
                       <p className="text-xs text-slate-600 mt-1">Total Leads</p>
                     </div>
-                    <div className="bg-slate-50 p-4 rounded-lg border border-slate-200 text-center">
-                      <p className="text-2xl font-bold text-slate-700">{selectedSalesman.leads.new}</p>
+                    <div className="bg-slate-50 p-3 sm:p-4 rounded-lg border border-slate-200 text-center">
+                      <p className="text-lg sm:text-2xl font-bold text-slate-700">{selectedSalesman.leads.new}</p>
                       <p className="text-xs text-slate-600 mt-1">New</p>
                     </div>
-                    <div className="bg-orange-50 p-4 rounded-lg border border-orange-200 text-center">
-                      <p className="text-2xl font-bold text-orange-600">{selectedSalesman.leads.proposal}</p>
+                    <div className="bg-orange-50 p-3 sm:p-4 rounded-lg border border-orange-200 text-center">
+                      <p className="text-lg sm:text-2xl font-bold text-orange-600">{selectedSalesman.leads.proposal}</p>
                       <p className="text-xs text-slate-600 mt-1">In Proposal</p>
                     </div>
-                    <div className="bg-green-50 p-4 rounded-lg border border-green-200 text-center">
-                      <p className="text-2xl font-bold text-green-600">{selectedSalesman.leads.closed_won}</p>
+                    <div className="bg-green-50 p-3 sm:p-4 rounded-lg border border-green-200 text-center">
+                      <p className="text-lg sm:text-2xl font-bold text-green-600">{selectedSalesman.leads.closed_won}</p>
                       <p className="text-xs text-slate-600 mt-1">Closed Won</p>
                     </div>
-                    <div className="bg-red-50 p-4 rounded-lg border border-red-200 text-center">
-                      <p className="text-2xl font-bold text-red-600">{selectedSalesman.leads.not_interested}</p>
+                    <div className="bg-red-50 p-3 sm:p-4 rounded-lg border border-red-200 text-center">
+                      <p className="text-lg sm:text-2xl font-bold text-red-600">{selectedSalesman.leads.not_interested}</p>
                       <p className="text-xs text-slate-600 mt-1">Not Interested</p>
                     </div>
                   </div>
@@ -375,21 +370,21 @@ const ManagerSalesPerformance = () => {
                     <span className="w-2 h-2 bg-orange-500 rounded-full"></span>
                     Performance Metrics
                   </h4>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="bg-gradient-to-br from-orange-50 to-amber-50 p-4 rounded-lg border border-orange-200">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-4">
+                    <div className="bg-gradient-to-br from-orange-50 to-amber-50 p-3 sm:p-4 rounded-lg border border-orange-200">
                       <span className="text-xs font-semibold text-orange-700 block mb-2 uppercase tracking-wide">🎯 Win Rate</span>
-                      <p className="text-xl font-bold text-orange-600">{selectedSalesman.winRate}%</p>
-                      <div className="w-full bg-orange-100 h-2 rounded-full mt-3 overflow-hidden">
+                      <p className="text-lg sm:text-xl font-bold text-orange-600">{selectedSalesman.winRate}%</p>
+                      <div className="w-full bg-orange-100 h-2 rounded-full mt-2 sm:mt-3 overflow-hidden">
                         <div
                           className="h-full bg-orange-500 rounded-full"
                           style={{ width: `${selectedSalesman.winRate}%` }}
                         />
                       </div>
                     </div>
-                    <div className="bg-gradient-to-br from-green-50 to-emerald-50 p-4 rounded-lg border border-green-200">
+                    <div className="bg-gradient-to-br from-green-50 to-emerald-50 p-3 sm:p-4 rounded-lg border border-green-200">
                       <span className="text-xs font-semibold text-green-700 block mb-2 uppercase tracking-wide">📈 Quota Achievement</span>
-                      <p className="text-xl font-bold text-green-600">{selectedSalesman.achievement}%</p>
-                      <div className="w-full bg-green-100 h-2 rounded-full mt-3 overflow-hidden">
+                      <p className="text-lg sm:text-xl font-bold text-green-600">{selectedSalesman.achievement}%</p>
+                      <div className="w-full bg-green-100 h-2 rounded-full mt-2 sm:mt-3 overflow-hidden">
                         <div
                           className="h-full bg-green-500 rounded-full"
                           style={{ width: `${Math.min(selectedSalesman.achievement, 100)}%` }}
