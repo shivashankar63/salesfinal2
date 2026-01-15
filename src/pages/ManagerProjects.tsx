@@ -45,13 +45,13 @@ const ManagerProjects = () => {
   return (
     <div className="flex min-h-screen bg-slate-50">
       <DashboardSidebar role="manager" />
-      <main className="flex-1 p-4 lg:p-8 pt-20 sm:pt-16 lg:pt-8 overflow-auto bg-slate-50">
-        <div className="mb-8 flex items-center justify-between">
+      <main className="flex-1 p-2 sm:p-4 lg:p-8 pt-16 sm:pt-20 lg:pt-8 overflow-auto bg-slate-50">
+        <div className="mb-4 sm:mb-8 flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-semibold text-slate-900">Projects</h1>
-            <p className="text-slate-600">Add and track sales projects</p>
+            <h1 className="text-xl sm:text-3xl font-semibold text-slate-900">Projects</h1>
+            <p className="text-xs sm:text-base text-slate-600">Add and track sales projects</p>
           </div>
-          <Button className="bg-slate-900 hover:bg-slate-800 text-white" onClick={() => setShowModal(true)}>
+          <Button className="bg-slate-900 hover:bg-slate-800 text-white py-3 text-base w-full sm:w-auto" onClick={() => setShowModal(true)}>
             <Plus className="w-4 h-4 mr-2" /> New Project
           </Button>
         </div>

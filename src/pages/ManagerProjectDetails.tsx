@@ -264,14 +264,14 @@ const ManagerProjectDetails = () => {
   return (
     <div className="flex min-h-screen bg-slate-50">
       <DashboardSidebar role="manager" />
-      <main className="flex-1 p-4 lg:p-8 pt-20 sm:pt-16 lg:pt-8 overflow-auto">
-        <div className="flex items-start justify-between gap-4 mb-6">
+      <main className="flex-1 p-2 sm:p-4 lg:p-8 pt-16 sm:pt-20 lg:pt-8 overflow-auto">
+        <div className="flex items-start justify-between gap-2 sm:gap-4 mb-4 sm:mb-6">
           <div className="min-w-0">
-            <div className="flex items-center gap-3 mb-2">
+            <div className="flex items-center gap-2 sm:gap-3 mb-1 sm:mb-2">
               <div className="w-11 h-11 rounded-xl bg-purple-600 text-slate-900 flex items-center justify-center flex-shrink-0"><CalendarDays className="w-5 h-5"/></div>
               <div className="min-w-0">
                 <div className="flex items-center gap-2">
-                  <h1 className="text-2xl md:text-3xl font-bold text-slate-900 truncate">{project.name}</h1>
+                  <h1 className="text-xl md:text-3xl font-bold text-slate-900 truncate">{project.name}</h1>
                   <Button size="sm" variant="outline" className="ml-2" onClick={openEditProjectModal}>
                     Edit Project
                   </Button>
@@ -287,7 +287,7 @@ const ManagerProjectDetails = () => {
                     Delete Project
                   </Button>
                 </div>
-                <div className="text-slate-500 text-sm whitespace-nowrap overflow-hidden text-ellipsis">{project.status || 'planned'} • Budget: {currency(project.budget || 0)}</div>
+                <div className="text-slate-500 text-xs sm:text-sm whitespace-nowrap overflow-hidden text-ellipsis">{project.status || 'planned'} • Budget: {currency(project.budget || 0)}</div>
                 <div className="text-slate-500 text-xs whitespace-nowrap overflow-hidden text-ellipsis">{project.start_date || '-'} → {project.end_date || '-'}</div>
               </div>
             </div>

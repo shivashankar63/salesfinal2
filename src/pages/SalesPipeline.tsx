@@ -214,7 +214,7 @@ const SalesPipeline = () => {
   return (
     <div className="flex min-h-screen bg-slate-50">
       <DashboardSidebar role="salesman" />
-      <main className="flex-1 p-4 lg:p-8 pt-20 sm:pt-16 lg:pt-8 overflow-auto">
+      <main className="flex-1 p-2 sm:p-4 lg:p-8 pt-16 sm:pt-20 lg:pt-8 overflow-auto">
         {loading ? (
           <div className="flex items-center justify-center min-h-[50vh]">
             <div className="text-center flex flex-col items-center gap-3">
@@ -226,22 +226,22 @@ const SalesPipeline = () => {
           <>
             {/* Header with Stats and Add Lead button */}
             <div className="mb-6">
-              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-3 mb-3 sm:mb-4">
                 <h1 className="text-2xl font-bold text-slate-900">Sales Pipeline</h1>
-                <Button className="bg-blue-700 text-white hover:bg-blue-800 w-full sm:w-auto" onClick={() => setShowAddModal(true)}>
+                <Button className="bg-blue-700 text-white hover:bg-blue-800 w-full sm:w-auto py-3 text-base" onClick={() => setShowAddModal(true)}>
                   Add Lead
                 </Button>
               </div>
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-4 mb-4 sm:mb-6">
                             {/* Add Lead Modal */}
                             <Dialog open={showAddModal} onOpenChange={setShowAddModal}>
-                              <DialogContent className="bg-white max-w-lg">
+                              <DialogContent className="bg-white max-w-xs sm:max-w-lg p-2 sm:p-6">
                                 <DialogHeader>
                                   <DialogTitle>Add New Lead</DialogTitle>
                                   <DialogDescription>Enter the details for the new lead</DialogDescription>
                                 </DialogHeader>
-                                <div className="space-y-4 py-2">
-                                  <div className="grid grid-cols-2 gap-4">
+                                <div className="space-y-3 py-1 sm:py-2">
+                                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-4">
                                     <div>
                                       <Label>Company Name</Label>
                                       <Input value={formData.company_name} onChange={e => setFormData({ ...formData, company_name: e.target.value })} />

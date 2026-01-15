@@ -462,18 +462,18 @@ const ManagerLeads = () => {
     <div className="flex min-h-screen bg-slate-50">
       <DashboardSidebar role="manager" />
       
-      <main className="flex-1 p-2 sm:p-4 lg:p-8 pt-20 sm:pt-16 lg:pt-8 overflow-auto">
-        <div className="mb-4 sm:mb-6">
-          <h1 className="text-2xl sm:text-2xl font-bold text-slate-900 mb-1 sm:mb-2">Leads Management</h1>
-          <p className="text-sm sm:text-base text-slate-600">Manage and track all leads across projects</p>
+      <main className="flex-1 p-1 sm:p-4 lg:p-8 pt-16 sm:pt-20 lg:pt-8 overflow-auto">
+        <div className="mb-2 sm:mb-6">
+          <h1 className="text-xl sm:text-2xl font-bold text-slate-900 mb-1 sm:mb-2">Leads Management</h1>
+          <p className="text-xs sm:text-base text-slate-600">Manage and track all leads across projects</p>
         </div>
 
 
 
         {/* Filters/Search Bar with Project Selector */}
-        <Card className="p-4 bg-white border-slate-200 shadow-sm mb-4">
-          <div className="flex flex-wrap items-center gap-3">
-            <div className="flex-none min-w-[150px] max-w-[200px]">
+        <Card className="p-2 sm:p-4 bg-white border-slate-200 shadow-sm mb-2 sm:mb-4">
+          <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+            <div className="flex-none min-w-[120px] max-w-[180px]">
               <Select
                 value={selectedProject ? selectedProject.id : "all"}
                 onValueChange={(value) => {
