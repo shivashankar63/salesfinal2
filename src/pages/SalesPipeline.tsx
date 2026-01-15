@@ -151,12 +151,13 @@ const SalesPipeline = () => {
   };
 
   const getStageColor = (color: string) => {
+    // Improved contrast: darker backgrounds, lighter text for colored elements
     const colors: Record<string, { bg: string; text: string; border: string; badge: string }> = {
-      blue: { bg: "bg-blue-50", text: "text-blue-900", border: "border-blue-200", badge: "bg-blue-600" },
-      purple: { bg: "bg-purple-50", text: "text-purple-900", border: "border-purple-200", badge: "bg-purple-600" },
-      amber: { bg: "bg-amber-50", text: "text-amber-900", border: "border-amber-200", badge: "bg-amber-600" },
-      emerald: { bg: "bg-emerald-50", text: "text-emerald-900", border: "border-emerald-200", badge: "bg-emerald-600" },
-      slate: { bg: "bg-slate-50", text: "text-slate-900", border: "border-slate-200", badge: "bg-slate-600" },
+      blue: { bg: "bg-blue-700", text: "text-white", border: "border-blue-800", badge: "bg-blue-900 text-white" },
+      purple: { bg: "bg-purple-700", text: "text-white", border: "border-purple-800", badge: "bg-purple-900 text-white" },
+      amber: { bg: "bg-amber-600", text: "text-white", border: "border-amber-700", badge: "bg-amber-800 text-white" },
+      emerald: { bg: "bg-emerald-700", text: "text-white", border: "border-emerald-800", badge: "bg-emerald-900 text-white" },
+      slate: { bg: "bg-slate-700", text: "text-white", border: "border-slate-800", badge: "bg-slate-900 text-white" },
     };
     return colors[color] || colors.blue;
   };
@@ -288,11 +289,11 @@ const SalesPipeline = () => {
                       <div className="flex items-center justify-between">
                         <div>
                           <h2 className={`text-lg font-semibold ${colors.text}`}>{stage.name}</h2>
-                          <p className="text-sm text-slate-600">{stage.description}</p>
+                          <p className="text-sm text-white/80">{stage.description}</p>
                         </div>
                         <div className="text-right">
-                          <p className="text-2xl font-bold text-slate-900">${stage.value.toLocaleString()}</p>
-                          <p className="text-sm text-slate-600">{stage.leads.length} {stage.leads.length === 1 ? 'deal' : 'deals'}</p>
+                          <p className={`text-2xl font-bold ${colors.text}`}>${stage.value.toLocaleString()}</p>
+                          <p className="text-sm text-white/80">{stage.leads.length} {stage.leads.length === 1 ? 'deal' : 'deals'}</p>
                         </div>
                       </div>
                     </Card>
@@ -406,7 +407,7 @@ const SalesPipeline = () => {
                               </div>
 
                               {/* Deal Value */}
-                              <div className={`inline-flex items-center gap-2 ${colors.badge} text-white px-3 py-1.5 rounded-lg mb-4`}>
+                              <div className={`inline-flex items-center gap-2 ${colors.badge} px-3 py-1.5 rounded-lg mb-4`}>
                                 <DollarSign className="w-4 h-4" />
                                 <span className="font-semibold">${(lead.value || 0).toLocaleString()}</span>
                               </div>
