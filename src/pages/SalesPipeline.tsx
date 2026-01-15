@@ -217,13 +217,13 @@ const SalesPipeline = () => {
               </div>
 
               {/* Search */}
-              <div className="relative mb-4">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+              <div className="relative mb-4 w-full max-w-full flex">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 pointer-events-none" />
                 <Input
                   placeholder="Search leads by company, contact, or email..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-10 bg-white border-slate-200"
+                  className="pl-10 bg-white border-slate-200 w-full min-w-0 text-base rounded-lg focus:ring-2 focus:ring-blue-200 transition-all"
                 />
               </div>
             </div>
