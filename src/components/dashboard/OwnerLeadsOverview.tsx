@@ -363,7 +363,7 @@ const OwnerLeadsOverview = () => {
                 >
                   <option value="">Unassigned</option>
                   {users
-                    .filter(u => u.role !== 'owner')
+                    .filter(u => String(u.role || '').toLowerCase() !== 'owner')
                     .map(user => (
                       <option key={user.id} value={user.id}>{user.full_name}</option>
                     ))

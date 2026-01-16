@@ -74,7 +74,8 @@ const DashboardSidebar = ({ role }: SidebarProps) => {
   const [userEmail, setUserEmail] = useState<string>("");
   const location = useLocation();
   const navigate = useNavigate();
-  const menuItems = getMenuItems(role);
+  const normalizedRole = String(role || 'salesman').toLowerCase() as "owner" | "manager" | "salesman";
+  const menuItems = getMenuItems(normalizedRole);
 
   const roleLabels = {
     owner: "Owner",
@@ -113,13 +114,13 @@ const DashboardSidebar = ({ role }: SidebarProps) => {
       {/* Logo */}
       <div className="p-4 flex items-center justify-between border-b border-slate-200">
         <div className={cn("flex items-center gap-3", isCollapsed && "justify-center")}>
-          <div className={`w-10 h-10 rounded-xl ${roleColors[role]} flex items-center justify-center flex-shrink-0`}>
+          <div className={`w-10 h-10 rounded-xl ${roleColors[normalizedRole]} flex items-center justify-center flex-shrink-0`}>
             <TrendingUp className="w-6 h-6 text-white" />
           </div>
           {!isCollapsed && (
             <div>
               <span className="text-xl font-bold text-slate-900 block">SalesFlow</span>
-              <span className="text-xs text-slate-600">{roleLabels[role]}</span>
+              <span className="text-xs text-slate-600">{roleLabels[normalizedRole]}</span>
             </div>
           )}
         </div>

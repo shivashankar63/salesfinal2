@@ -27,12 +27,13 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
             .single();
           
           if (data) {
+            const role = String(data.role || '').toLowerCase() as UserRole;
             const dashboardRoute = {
               owner: '/owner',
               manager: '/manager',
               salesman: '/salesman',
             };
-            navigate(dashboardRoute[data.role as UserRole], { replace: true });
+            navigate(dashboardRoute[role] || '/login', { replace: true });
           }
         }
       } catch (error) {

@@ -96,9 +96,10 @@ const SalesPipeline = () => {
 
         setCurrentUser(user);
         const { data: userData } = await getUserById(user.id);
-        if (userData?.role !== 'salesman') {
+        const role = String(userData?.role || '').toLowerCase();
+        if (role !== 'salesman') {
           const roleRoutes = { owner: '/owner', manager: '/manager' };
-          navigate(roleRoutes[userData?.role as 'owner' | 'manager'] || '/login', { replace: true });
+          navigate(roleRoutes[role as 'owner' | 'manager'] || '/login', { replace: true });
           return;
         }
 

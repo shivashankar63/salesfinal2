@@ -48,7 +48,7 @@ const Leads = () => {
       let leadData = { ...formData };
       if (user) {
         const { data: userData } = await getUserById(user.id);
-        if (userData?.role === "salesman") {
+        if (String(userData?.role || '').toLowerCase() === "salesman") {
           leadData.assigned_to = user.id;
         }
       }

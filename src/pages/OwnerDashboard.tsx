@@ -64,9 +64,10 @@ const OwnerDashboard = () => {
         }
         
         const { data: userData } = await getUserById(currentUser.id);
-        if (userData?.role !== 'owner') {
+        const role = String(userData?.role || '').toLowerCase();
+        if (role !== 'owner') {
           const roleRoutes = { manager: '/manager', salesman: '/salesman' };
-          navigate(roleRoutes[userData?.role as 'manager' | 'salesman'] || '/login', { replace: true });
+          navigate(roleRoutes[role as 'manager' | 'salesman'] || '/login', { replace: true });
           return;
         }
 
@@ -85,7 +86,7 @@ const OwnerDashboard = () => {
         const activeLeads = leads.filter((l: any) => 
           ['new', 'qualified', 'negotiation'].includes(l.status)
         ).length;
-        const teamMembers = users.filter((u: any) => u.role !== 'owner').length;
+        const teamMembers = users.filter((u: any) => String(u.role || '').toLowerCase() !== 'owner').length;
         const wonLeads = leads.filter((l: any) => l.status === 'won').length;
         const conversionRate = leads.length > 0 ? ((wonLeads / leads.length) * 100).toFixed(1) : 0;
 

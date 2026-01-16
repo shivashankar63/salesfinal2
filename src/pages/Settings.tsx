@@ -27,7 +27,7 @@ const Settings = () => {
         const authUser = await getCurrentUser();
         if (authUser?.id) {
           const { data } = await getUserById(authUser.id);
-          const role = data?.role as "owner" | "manager" | "salesman" | undefined;
+          const role = String(data?.role || 'owner').toLowerCase() as "owner" | "manager" | "salesman";
           if (role) setSidebarRole(role);
         }
       } catch (error) {

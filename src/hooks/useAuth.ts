@@ -34,7 +34,8 @@ export const useAuth = () => {
           if (dbError) {
             console.error('Error fetching user role:', dbError);
           } else if (data) {
-            setUserRole(data.role as 'owner' | 'manager' | 'salesman');
+            const role = String(data.role || '').toLowerCase() as 'owner' | 'manager' | 'salesman';
+            setUserRole(role);
           }
         } else {
           setUser(null);
@@ -63,7 +64,8 @@ export const useAuth = () => {
             .single();
           
           if (data) {
-            setUserRole(data.role as 'owner' | 'manager' | 'salesman');
+            const role = String(data.role || '').toLowerCase() as 'owner' | 'manager' | 'salesman';
+            setUserRole(role);
           }
         } else {
           setUserRole(null);
@@ -100,15 +102,16 @@ export const useAuth = () => {
           .single();
 
         if (userData) {
-          setUserRole(userData.role as 'owner' | 'manager' | 'salesman');
-          
+          const role = String(userData.role || '').toLowerCase() as 'owner' | 'manager' | 'salesman';
+          setUserRole(role);
+
           // Redirect to appropriate dashboard
           const dashboardRoute = {
             owner: '/owner',
             manager: '/manager',
             salesman: '/salesman',
           };
-          navigate(dashboardRoute[userData.role as 'owner' | 'manager' | 'salesman']);
+          navigate(dashboardRoute[role] || '/login');
         }
       }
 
@@ -149,7 +152,8 @@ export const useAuth = () => {
         }
 
         setUser(data.user);
-        setUserRole(role);
+        const normalized = String(role || '').toLowerCase() as 'owner' | 'manager' | 'salesman';
+        setUserRole(normalized);
         
         // Redirect to appropriate dashboard
         const dashboardRoute = {
@@ -157,7 +161,7 @@ export const useAuth = () => {
           manager: '/manager',
           salesman: '/salesman',
         };
-        navigate(dashboardRoute[role]);
+        navigate(dashboardRoute[normalized] || '/login');
       }
 
       return true;

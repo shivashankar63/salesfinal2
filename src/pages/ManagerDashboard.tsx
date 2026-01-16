@@ -31,9 +31,10 @@ const ManagerDashboard = () => {
         }
 
         const { data: userData } = await getUserById(user.id);
-        if (userData?.role !== 'manager') {
+        const role = String(userData?.role || '').toLowerCase();
+        if (role !== 'manager') {
           const roleRoutes = { owner: '/owner', salesman: '/salesman' };
-          navigate(roleRoutes[userData?.role as 'owner' | 'salesman'] || '/login', { replace: true });
+          navigate(roleRoutes[role as 'owner' | 'salesman'] || '/login', { replace: true });
           return;
         }
 

@@ -34,12 +34,13 @@ const Login = () => {
           .single();
         
         if (data) {
+          const role = String(data.role || '').toLowerCase() as UserRole;
           const dashboardRoute = {
             owner: '/owner',
             manager: '/manager',
             salesman: '/salesman',
           };
-          navigate(dashboardRoute[data.role as UserRole]);
+          navigate(dashboardRoute[role] || '/login');
         }
       }
     };
@@ -105,12 +106,13 @@ const Login = () => {
             .single();
 
           if (userData) {
+            const role = String(userData.role || '').toLowerCase() as UserRole;
             const dashboardRoute = {
               owner: '/owner',
               manager: '/manager',
               salesman: '/salesman',
             };
-            navigate(dashboardRoute[userData.role as UserRole]);
+            navigate(dashboardRoute[role] || '/login');
           }
         }
       }

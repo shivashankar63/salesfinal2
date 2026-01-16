@@ -63,12 +63,13 @@ const Home = () => {
 
           setSuccessMessage("Account created successfully! Logging you in...");
           setTimeout(() => {
+            const role = String(selectedRole || '').toLowerCase() as UserRole;
             const dashboardRoute = {
               owner: '/owner',
               manager: '/manager',
               salesman: '/salesman',
             };
-            navigate(dashboardRoute[selectedRole], { replace: true });
+            navigate(dashboardRoute[role] || '/login', { replace: true });
           }, 1500);
         }
       } else {
@@ -90,12 +91,13 @@ const Home = () => {
             .single();
 
           if (userData) {
+            const role = String(userData.role || '').toLowerCase() as UserRole;
             const dashboardRoute = {
               owner: '/owner',
               manager: '/manager',
               salesman: '/salesman',
             };
-            navigate(dashboardRoute[userData.role as UserRole], { replace: true });
+            navigate(dashboardRoute[role] || '/login', { replace: true });
           }
         }
       }
